@@ -1,6 +1,5 @@
-import React from 'react'
-import { BentoGrid, BentoGridItem } from './ui/BentoGrid'
-import { gridItems } from '@/data'
+import { gridItems } from '@/data';
+import { BentoGrid, BentoGridItem } from './ui/BentoGrid';
 
 export interface GridItem {
  id: number;

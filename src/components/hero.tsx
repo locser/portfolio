@@ -3,9 +3,12 @@ import ShrimperButton from './ShrimperButton';
 import { Spotlight } from './ui/Spotlight';
 import { TextGenerateEffect } from './ui/TextGenerateEffect';
 import { FaLocationArrow } from "react-icons/fa";
+import LitUpBorder from "./LitUpBorder";
 
 const Hero = () => {
  return (
+  <div>
+
   <div className='pb-20 pt-36'>
    <div>
     <Spotlight className="-top-40 -left-40 md:-left-32 md:-top20 h-screen" fill="white" />
@@ -41,15 +44,16 @@ const Hero = () => {
     </div>
    </div>
 
-   <div className="flex flex-row items-center">
-    <h1 className="heading md:max-w lg:max-w">
+{/* Chung chung về bản thân, câu nói hay qq gì đó */}
+   <div className="flex flex-col items-center w-full justify-center relative z-10">
+    <h1 className="heading md:w-full lg:w-full flex-1 text-white leading-[1.8] md:text-3xl lg:text-4xl font-bold">
      Làm việc tại Copier Việt Nam - Công ty chuyên nghiệp về phát triển website và ứng dụng web
     </h1>
-    <p className="text-white-200 md:mt-10 my-5 text-center">
+    <p className="text-white-200 md:mt-10 my-5 md:text-2xl lg:text-3xl ">
      Công ty tôi yêu abc
     </p>
     <a href="mailto:locser.02@gmail.com">
-     <ShrimperButton
+     <LitUpBorder
       title="Let's get in touch"
       icon={<FaLocationArrow />}
       position="right"
@@ -57,8 +61,7 @@ const Hero = () => {
     </a>
    </div>
   </div>
-
-
+  </div>
  )
 }
 
