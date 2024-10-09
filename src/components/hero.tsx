@@ -24,7 +24,6 @@ const Hero = () => {
      {/* Backgrounds */}
     </p>
    </div>
-
    <div className='flex justify-center relative my-20 z-10'>
     <div className='max-w-[89vw] md:max-w-2xl lg:max-w-[80vw] flex flex-col items-center justify-center'>
      <h2 className='uppercase text-center text-blue-100 text-xs sm:text-xs max-w-80 tracking-widest '>Dynamic web magic with Next.js</h2>
@@ -34,13 +33,10 @@ const Hero = () => {
      <p className="text-center">
       <span className="text-neutral-500 text-lg sm:text-xl md:text-2xl font-bold">Hi, I am Copier, a web developer with a passion for creating dynamic and interactive web experiences. With a strong foundation in Next.js, I specialize in building fast, scalable, and user-friendly websites and applications.</span>
      </p>
-
      <a href="#button-shrimper">
       <ShrimperButton title={'Show my ...'} icon={<MdOutlineSlideshow />} position={'right'} otherClasses='' >
-
       </ShrimperButton>
      </a>
-
     </div>
    </div>
 
