@@ -1,64 +1,81 @@
+import { FaGithub, FaLinkedin, FaLocationArrow, FaTwitter } from "react-icons/fa";
 import { MdOutlineSlideshow } from "react-icons/md";
+
+import { contactInfo } from '../config/data';
+
 import ShrimperButton from './ShrimperButton';
 import { Spotlight } from './ui/Spotlight';
 import { TextGenerateEffect } from './ui/TextGenerateEffect';
-import { FaLocationArrow } from "react-icons/fa";
-import LitUpBorder from "./LitUpBorder";
+
 
 const Hero = () => {
  return (
-  <div>
+  <div className="relative min-h-screen">
+   <div className="pb-20 pt-36">
+    <div className="absolute inset-0 overflow-hidden">
+     <Spotlight className="-top-40 -left-40 md:-left-32 md:-top20 h-screen" fill="white" />
+     <Spotlight className="-bot-20 -right-full h-[80vh] w-[50vw]" fill="red" />
+     <Spotlight className="-top-28 -left-80 h-[80vh] w-[50vw]" fill="blue" />
+    </div>
 
-  <div className='pb-20 pt-36'>
-   <div>
-    <Spotlight className="-top-40 -left-40 md:-left-32 md:-top20 h-screen" fill="white" />
-    <Spotlight className="-bot-20 -right-full h-[80vh] w-[50vw]" fill="red" />
-    <Spotlight className="-top-28 -left-80 h-[80vh] w-[50vw]" fill="blue" />
+    <div className="relative z-10 flex flex-col items-center justify-center px-4">
+     <h2 className="text-blue-100 text-sm tracking-widest uppercase mb-6">Full Stack Developer & Tech Enthusiast</h2>
 
-   </div>
-   {/* dark:bg-grid-white/[0.5] bg-grid-black/[0.2] */}
-   <div className="h-screen w-full dark:bg-black-100 bg-white  flex items-center justify-center absolute top-0 left-0 ">
-    {/* Radial gradient for the container to give a faded look */}
-    <div className="absolute pointer-events-none inset-0 flex items-center justify-center dark:bg-black-100 bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"></div>
-    <p className="text-4xl sm:text-7xl font-bold relative z-20 bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 to-neutral-500 py-8">
-     {/* Backgrounds */}
-    </p>
-   </div>
-   <div className='flex justify-center relative my-20 z-10'>
-    <div className='max-w-[89vw] md:max-w-2xl lg:max-w-[80vw] flex flex-col items-center justify-center'>
-     <h2 className='uppercase text-center text-blue-100 text-xs sm:text-xs max-w-80 tracking-widest '>Dynamic web magic with Next.js</h2>
+     <TextGenerateEffect 
+       className="text-center text-neutral-200 text-4xl sm:text-5xl md:text-6xl font-bold mb-8" 
+       words="Building Modern Web Experiences with Next.js" 
+     />
 
-     <TextGenerateEffect className="text-center text-neutral-500 text-4xl sm:text-5xl md:text-6xl font-bold my-10" words="Transforming the web with Next.js magic" />
-
-     <p className="text-center">
-      <span className="text-neutral-500 text-lg sm:text-xl md:text-2xl font-bold">Hi, I am Copier, a web developer with a passion for creating dynamic and interactive web experiences. With a strong foundation in Next.js, I specialize in building fast, scalable, and user-friendly websites and applications.</span>
+     <p className="text-center max-w-2xl mb-12">
+      <span className="text-neutral-300 text-lg sm:text-xl">
+        Passionate about creating scalable, user-centric web applications with modern technologies.
+        Specializing in Next.js, React, and full-stack development.
+      </span>
      </p>
-     <a href="#button-shrimper">
-      <ShrimperButton title={'Show my ...'} icon={<MdOutlineSlideshow />} position={'right'} otherClasses='' >
-      </ShrimperButton>
-     </a>
+
+     <div className="flex gap-6 mb-12">
+      <a href={contactInfo.social_media.github} target="_blank" rel="noopener noreferrer">
+       <FaGithub className="text-2xl text-neutral-300 hover:text-white transition-colors" />
+      </a>
+      <a href={contactInfo.social_media.linkedin} target="_blank" rel="noopener noreferrer">
+       <FaLinkedin className="text-2xl text-neutral-300 hover:text-white transition-colors" />
+      </a>
+      <a href={contactInfo.social_media.twitter} target="_blank" rel="noopener noreferrer">
+       <FaTwitter className="text-2xl text-neutral-300 hover:text-white transition-colors" />
+      </a>
+     </div>
+
+     <div className="flex flex-row justify-center items-center gap-6 w-full max-w-xl mx-auto">
+      <a href="#projects" className="flex-1">
+       <ShrimperButton 
+         title="View Projects" 
+         icon={<MdOutlineSlideshow />} 
+         position="right" 
+         otherClasses="w-full" 
+       />
+      </a>
+      <a href="/resume.pdf" target="_blank" rel="noopener noreferrer" className="flex-1">
+       <ShrimperButton
+        title="Download CV"
+        icon={<FaLocationArrow />}
+        position="right"
+        otherClasses="w-full"
+       />
+      </a>
+      <a href="#contact" className="flex-1"> 
+        {/* {`mailto:${contactInfo.email}`} */}
+       <ShrimperButton
+        title="Let's Connect"
+        icon={<FaLocationArrow />}
+        position="right"
+        otherClasses="w-full"
+       />
+      </a>
+     </div>
     </div>
    </div>
-
-{/* Chung chung về bản thân, câu nói hay qq gì đó */}
-   <div className="flex flex-col items-center w-full justify-center relative z-10">
-    <h1 className="heading md:w-full lg:w-full flex-1 text-white leading-[1.8] md:text-3xl lg:text-4xl font-bold">
-     Làm việc tại Copier Việt Nam - Công ty chuyên nghiệp về phát triển website và ứng dụng web
-    </h1>
-    <p className="text-white-200 md:mt-10 my-5 md:text-2xl lg:text-3xl ">
-     Công ty tôi yêu abc
-    </p>
-    <a href="mailto:locser.02@gmail.com">
-     <LitUpBorder
-      title="Let's get in touch"
-      icon={<FaLocationArrow />}
-      position="right"
-     />
-    </a>
-   </div>
   </div>
-  </div>
- )
-}
+ );
+};
 
-export default Hero
+export default Hero;

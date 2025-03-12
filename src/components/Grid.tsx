@@ -1,5 +1,5 @@
-import { gridItems } from '@/data';
-import { BentoGrid, BentoGridItem } from './ui/BentoGrid';
+
+
 
 export interface GridItem {
  id: number;
@@ -15,7 +15,7 @@ export interface GridItem {
 const Grid = () => {
  return (
   <section id="about">
-   <BentoGrid>
+   {/* <BentoGrid>
     {
      gridItems.map((item: GridItem) => (
       <BentoGridItem
@@ -33,7 +33,7 @@ const Grid = () => {
       />
      ))
     }
-   </BentoGrid>
+   </BentoGrid> */}
 
   </section>
  )
