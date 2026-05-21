@@ -32,7 +32,7 @@ const Contact = () => {
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          className="text-4xl font-bold text-neutral-200 mb-12 text-center"
+          className="text-4xl font-extrabold text-zinc-900 dark:text-neutral-200 mb-12 text-center"
         >
           Let&apos;s Connect
         </motion.h2>
@@ -44,8 +44,8 @@ const Contact = () => {
             whileInView={{ opacity: 1, x: 0 }}
             className="space-y-8"
           >
-            <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-8 backdrop-blur-sm">
-              <h3 className="text-2xl font-semibold text-neutral-200 mb-6">Connect With Me</h3>
+            <div className="bg-white dark:bg-neutral-900/50 border border-zinc-200 dark:border-neutral-800 rounded-2xl p-8 backdrop-blur-sm shadow-sm dark:shadow-none">
+              <h3 className="text-2xl font-bold text-zinc-900 dark:text-neutral-200 mb-6">Connect With Me</h3>
               <div className="flex flex-wrap gap-4">
                 {socialLinks.map((social) => (
                   <a
@@ -53,7 +53,7 @@ const Contact = () => {
                     href={social.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-3 px-6 py-3 rounded-xl bg-neutral-800/50 text-neutral-200 ${social.color} transition-all hover:scale-105 hover:shadow-lg hover:text-white`}
+                    className={`flex items-center gap-3 px-6 py-3 rounded-xl bg-zinc-50 dark:bg-neutral-800/50 border border-zinc-200 dark:border-neutral-800 text-zinc-700 dark:text-neutral-200 ${social.color} hover:text-white dark:hover:text-white transition-all hover:scale-105 hover:shadow-lg`}
                   >
                     {social.icon}
                     <span>{social.name}</span>
@@ -62,16 +62,16 @@ const Contact = () => {
               </div>
             </div>
 
-            <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-8 backdrop-blur-sm">
-              <h3 className="text-2xl font-semibold text-neutral-200 mb-6">Download CV</h3>
+            <div className="bg-white dark:bg-neutral-900/50 border border-zinc-200 dark:border-neutral-800 rounded-2xl p-8 backdrop-blur-sm shadow-sm dark:shadow-none">
+              <h3 className="text-2xl font-bold text-zinc-900 dark:text-neutral-200 mb-6">Download CV</h3>
               <a
                 href="/path-to-your-cv.pdf"
-                className="group flex items-center gap-3 px-6 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all hover:scale-105 hover:shadow-lg w-fit"
+                className="group flex items-center gap-3 px-6 py-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-black font-semibold transition-all hover:scale-105 hover:shadow-lg w-fit"
               >
                 <MdDownload className="text-2xl group-hover:animate-bounce" />
                 <span>Download Resume</span>
               </a>
-              <p className="text-neutral-400 mt-4 text-sm">
+              <p className="text-zinc-500 dark:text-neutral-400 mt-4 text-sm font-light">
                 Last updated: January 2024
               </p>
             </div>
@@ -81,46 +81,46 @@ const Contact = () => {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
-            className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-8 backdrop-blur-sm"
+            className="bg-white dark:bg-neutral-900/50 border border-zinc-200 dark:border-neutral-800 rounded-2xl p-8 backdrop-blur-sm shadow-sm dark:shadow-none"
           >
-            <h3 className="text-2xl font-semibold text-neutral-200 mb-6">Send a Message</h3>
-            <div className="flex items-center gap-3 text-neutral-400 mb-6">
+            <h3 className="text-2xl font-bold text-zinc-900 dark:text-neutral-200 mb-6">Send a Message</h3>
+            <div className="flex items-center gap-3 text-zinc-650 dark:text-neutral-400 mb-6">
               <MdEmail className="text-xl" />
-              <a href="mailto:your.email@example.com" className="hover:text-blue-400 transition-colors">
+              <a href="mailto:your.email@example.com" className="hover:text-zinc-950 dark:hover:text-white transition-colors underline font-light">
                 your.email@example.com
               </a>
             </div>
-            <p className="text-neutral-400 mb-8">
+            <p className="text-zinc-550 dark:text-neutral-400 mb-8 font-light text-sm">
               Expected response time: 24-48 hours
             </p>
             <form className="space-y-6">
               <div className="space-y-2">
-                <label htmlFor="name" className="text-neutral-200 block">Name</label>
+                <label htmlFor="name" className="text-zinc-800 dark:text-neutral-200 block text-sm font-medium">Name</label>
                 <input
                   type="text"
                   id="name"
-                  className="w-full px-4 py-3 rounded-xl bg-neutral-800/50 border border-neutral-700 focus:border-blue-500 focus:outline-none text-neutral-200"
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-neutral-800/50 border border-zinc-200 dark:border-neutral-700 focus:border-zinc-400 dark:focus:border-blue-500 focus:outline-none text-zinc-800 dark:text-neutral-200 transition-colors"
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="email" className="text-neutral-200 block">Email</label>
+                <label htmlFor="email" className="text-zinc-800 dark:text-neutral-200 block text-sm font-medium">Email</label>
                 <input
                   type="email"
                   id="email"
-                  className="w-full px-4 py-3 rounded-xl bg-neutral-800/50 border border-neutral-700 focus:border-blue-500 focus:outline-none text-neutral-200"
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-neutral-800/50 border border-zinc-200 dark:border-neutral-700 focus:border-zinc-400 dark:focus:border-blue-500 focus:outline-none text-zinc-800 dark:text-neutral-200 transition-colors"
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="message" className="text-neutral-200 block">Message</label>
+                <label htmlFor="message" className="text-zinc-800 dark:text-neutral-200 block text-sm font-medium">Message</label>
                 <textarea
                   id="message"
                   rows={4}
-                  className="w-full px-4 py-3 rounded-xl bg-neutral-800/50 border border-neutral-700 focus:border-blue-500 focus:outline-none text-neutral-200 resize-none"
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-neutral-800/50 border border-zinc-200 dark:border-neutral-700 focus:border-zinc-400 dark:focus:border-blue-500 focus:outline-none text-zinc-800 dark:text-neutral-200 resize-none transition-colors"
                 ></textarea>
               </div>
               <button
                 type="submit"
-                className="w-full px-6 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium transition-all hover:shadow-lg"
+                className="w-full px-6 py-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-black font-bold transition-all hover:shadow-lg"
               >
                 Send Message
               </button>

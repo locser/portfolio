@@ -1,6 +1,7 @@
 "use client";
-import { useEffect } from "react";
 import { motion, stagger, useAnimate } from "framer-motion";
+import { useEffect } from "react";
+
 import { cn } from "@/src/lib/utils";
 
 
@@ -29,7 +30,8 @@ export const TextGenerateEffect = ({
     delay: stagger(0.2),
    }
   );
- }, [scope.current]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, []);
 
  const renderWords = () => {
   return (
@@ -38,7 +40,7 @@ export const TextGenerateEffect = ({
      return (
       <motion.span
        key={word + idx}
-       className={`${idx > 3 ? 'text-blue-400' : 'text-dark:text-white text-gray-400 '} opacity-0`}
+       className={`${idx > 3 ? 'text-blue-500 dark:text-blue-400' : 'text-zinc-950 dark:text-white'} opacity-0`}
        style={{
         filter: filter ? "blur(10px)" : "none",
        }}
@@ -54,7 +56,7 @@ export const TextGenerateEffect = ({
  return (
   <div className={cn("font-bold", className)}>
    <div className="mt-4">
-    <div className=" dark:text-white text-black text-2xl leading-snug tracking-wide">
+    <div className="text-zinc-950 dark:text-white text-2xl leading-snug tracking-wide">
      {renderWords()}
     </div>
    </div>

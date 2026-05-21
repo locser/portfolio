@@ -50,11 +50,13 @@ interface Experience {
 
 const Experience = () => {
   return (
-    <section id="experience" className="py-16">
+    <section id="experience" className="py-10">
       <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-4xl font-bold text-neutral-200 mb-12 text-center">Professional Experience</h2>
+        <h2 className="text-3xl font-extrabold text-zinc-900 dark:text-neutral-200 mb-10 text-center tracking-tight">
+          Professional Experience
+        </h2>
         
-        <div className="space-y-8">
+        <div className="space-y-6">
           {experiences.map((exp, index) => (
             <motion.div
               key={`${exp.company}-${exp.period}`}
@@ -67,18 +69,18 @@ const Experience = () => {
                 {/* Timeline dot */}
                 <div className="absolute left-0 md:relative md:w-48 flex-shrink-0">
                   <div className="h-full md:h-auto md:text-right">
-                    <span className="text-neutral-400 text-lg font-bold">{exp.period}</span>
+                    <span className="text-zinc-500 dark:text-neutral-400 text-lg font-bold">{exp.period}</span>
                   </div>
-                  <div className="absolute top-2 -left-1.5 md:hidden h-3 w-3 rounded-full bg-neutral-700" />
+                  <div className="absolute top-2 -left-1.5 md:hidden h-3 w-3 rounded-full bg-zinc-300 dark:bg-neutral-700" />
                 </div>
                 
                 {/* Content */}
                 <div className="flex-grow">
-                  <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl p-6 hover:border-neutral-700 transition-all">
-                    <h3 className="text-xl font-semibold text-neutral-200">{exp.title}</h3>
-                    <p className="text-neutral-400 mb-4">{exp.company}</p>
+                  <div className="bg-white dark:bg-[#0a0a0a] border border-zinc-200 dark:border-neutral-800 hover:border-zinc-400 dark:hover:border-neutral-750 transition-all rounded-2xl p-6 shadow-sm dark:shadow-none">
+                    <h3 className="text-xl font-bold text-zinc-900 dark:text-neutral-200">{exp.title}</h3>
+                    <p className="text-zinc-600 dark:text-neutral-400 text-sm font-semibold mb-4">{exp.company}</p>
                     
-                    <ul className="list-disc list-inside space-y-2 text-neutral-300 mb-4">
+                    <ul className="list-disc list-inside space-y-2 text-zinc-650 dark:text-neutral-350 mb-4 font-light leading-relaxed">
                       {exp.description.map((item, i) => (
                         <li key={i}>{item}</li>
                       ))}
@@ -88,7 +90,7 @@ const Experience = () => {
                       {exp.technologies.map((tech) => (
                         <span
                           key={tech}
-                          className="px-3 py-1 text-sm bg-neutral-800 text-neutral-300 rounded-full"
+                          className="px-3 py-1 text-xs font-semibold bg-zinc-100 dark:bg-neutral-800 text-zinc-600 dark:text-neutral-300 rounded-full border border-zinc-200 dark:border-transparent"
                         >
                           {tech}
                         </span>

@@ -29,22 +29,25 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-inter)", "sans-serif"],
+      },
       colors: {
         black: {
-          DEFAULT: "#000",
-          100: "#000319",
-          200: "rgba(17, 25, 40, 0.75)",
-          300: "rgba(255, 255, 255, 0.125)",
+          DEFAULT: "#050505",
+          100: "#0a0a0a", // Charcoal black
+          200: "#18181b", // Zinc 900
+          300: "#27272a", // Zinc 800
         },
         white: {
-          DEFAULT: "#FFF",
-          100: "#BEC1DD",
-          200: "#C1C2D3",
+          DEFAULT: "#ffffff",
+          100: "#f4f4f5", // Zinc 100
+          200: "#e4e4e7", // Zinc 200
         },
         blue: {
-          "100": "#E4ECFF",
+          "100": "#f4f4f5",
         },
-        purple: "#CBACF9",
+        purple: "#71717a", // Muted accent zinc 500
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

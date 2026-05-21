@@ -12,14 +12,12 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
-    serverActions: true,
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   poweredByHeader: false,
   reactStrictMode: true,
-  swcMinify: true,
 };
 
 export default nextConfig;

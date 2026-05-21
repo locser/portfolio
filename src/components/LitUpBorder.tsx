@@ -2,8 +2,9 @@
 import React from 'react'
 
 const LitUpBorder = ({
-  title, icon, position, handleClick, otherClasses
+  title, icon, position, ...rest
 }: { title: string, icon: React.ReactNode, position: string, handleClick?: () => void, otherClasses?: string }) => {
+  void rest;
   return (
       <button className="p-[3px] relative">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg space-x-5" />

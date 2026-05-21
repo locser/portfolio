@@ -18,16 +18,16 @@ const Hero = () => {
      <Spotlight className="-top-28 -left-80 h-[80vh] w-[50vw]" fill="blue" />
     </div>
 
-    <div className="relative z-10 flex flex-col items-center justify-center px-4">
-     <h2 className="text-blue-100 text-sm tracking-widest uppercase mb-6">Full Stack Developer & Tech Enthusiast</h2>
+     <div className="relative z-10 flex flex-col items-center justify-center px-4">
+     <h2 className="text-blue-600 dark:text-blue-100 text-sm tracking-widest uppercase mb-6">Full Stack Developer & Tech Enthusiast</h2>
 
      <TextGenerateEffect 
-       className="text-center text-neutral-200 text-4xl sm:text-5xl md:text-6xl font-bold mb-8" 
+       className="text-center text-zinc-950 dark:text-neutral-200 text-4xl sm:text-5xl md:text-6xl font-bold mb-8" 
        words="Building Modern Web Experiences with Next.js" 
      />
 
      <p className="text-center max-w-2xl mb-12">
-      <span className="text-neutral-300 text-lg sm:text-xl">
+      <span className="text-zinc-600 dark:text-neutral-350 text-lg sm:text-xl font-light">
         Passionate about creating scalable, user-centric web applications with modern technologies.
         Specializing in Next.js, React, and full-stack development.
       </span>
@@ -35,13 +35,13 @@ const Hero = () => {
 
      <div className="flex gap-6 mb-12">
       <a href={contactInfo.social_media.github} target="_blank" rel="noopener noreferrer">
-       <FaGithub className="text-2xl text-neutral-300 hover:text-white transition-colors" />
+       <FaGithub className="text-2xl text-zinc-400 dark:text-neutral-400 hover:text-zinc-950 dark:hover:text-white transition-colors" />
       </a>
       <a href={contactInfo.social_media.linkedin} target="_blank" rel="noopener noreferrer">
-       <FaLinkedin className="text-2xl text-neutral-300 hover:text-white transition-colors" />
+       <FaLinkedin className="text-2xl text-zinc-400 dark:text-neutral-400 hover:text-zinc-950 dark:hover:text-white transition-colors" />
       </a>
       <a href={contactInfo.social_media.twitter} target="_blank" rel="noopener noreferrer">
-       <FaTwitter className="text-2xl text-neutral-300 hover:text-white transition-colors" />
+       <FaTwitter className="text-2xl text-zinc-400 dark:text-neutral-400 hover:text-zinc-950 dark:hover:text-white transition-colors" />
       </a>
      </div>
 
