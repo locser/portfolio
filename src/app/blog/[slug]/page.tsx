@@ -6,6 +6,7 @@ import React from "react";
 import rehypeHighlight from "rehype-highlight";
 
 import ThemeToggle from "@/src/components/ThemeToggle";
+import ViewCounter from "@/src/components/ViewCounter";
 import {
   getPostBySlug,
   getPostSlugs,
@@ -177,6 +178,8 @@ export default function PostPage({ params }: PostPageProps) {
               <span>{post.date}</span>
               <span>•</span>
               <span>{post.readingTime}</span>
+              <span>•</span>
+              <ViewCounter slug={post.slug} />
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white md:text-4xl leading-tight mb-4">
               {post.title}
