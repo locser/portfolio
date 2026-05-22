@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import React from "react";
 
 import CreatePostForm from "@/src/components/CreatePostForm";
+import DeletePostButton from "@/src/components/DeletePostButton";
 import LogoutButton from "@/src/components/LogoutButton";
 import ThemeToggle from "@/src/components/ThemeToggle";
 import { verifySessionToken } from "@/src/lib/auth";
@@ -205,6 +206,7 @@ export default function AdminDashboardPage() {
                     <th className="px-6 py-4 font-semibold tracking-wider">Thẻ Tags</th>
                     <th className="px-6 py-4 font-semibold tracking-wider text-right">Lượt Đọc</th>
                     <th className="px-6 py-4 font-semibold tracking-wider text-center">Liên Kết</th>
+                    <th className="px-6 py-4 font-semibold tracking-wider text-center">Thao Tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-900/60">
@@ -250,6 +252,9 @@ export default function AdminDashboardPage() {
                             <span>Xem bài</span>
                             <span>↗</span>
                           </Link>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <DeletePostButton slug={post.slug} title={post.title} />
                         </td>
                       </tr>
                     );
