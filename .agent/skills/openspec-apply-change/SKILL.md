@@ -64,14 +64,38 @@ Implement tasks from an OpenSpec change.
    - Remaining tasks overview
    - Dynamic instruction from CLI
 
-6. **Implement tasks (loop until done or blocked)**
+6. **Implement tasks with Shift-Left Testing (loop until done or blocked)**
 
    For each pending task:
-   - Show which task is being worked on
-   - Make the code changes required
-   - Keep changes minimal and focused
-   - Mark task complete in the tasks file: `- [ ]` → `- [x]`
-   - Continue to next task
+
+   a. **Task Scope & Time Check (2-3h limit):**
+      - Đánh giá xem task này có thể hoàn thành xuất sắc trong vòng 2-3 giờ hay không.
+      - Nếu task quá lớn, có nguy cơ kéo dài hơn 3 giờ, hệ thống **MUST** thảo luận với người học để chia nhỏ task đó thành các sub-tasks độc lập có phạm vi rõ ràng hơn trước khi bắt đầu.
+
+   b. **Phân loại Task (Backend vs Frontend):**
+      - **Nếu là Task Frontend:**
+        - Tập trung phát triển code giao diện trực tiếp.
+        - Không viết unit test tự động (để tiết kiệm chi phí bảo trì).
+        - Thực hiện **Manual Visual Verification** (Tự kiểm thử trực quan trên trình duyệt) sau khi hoàn thành.
+      - **Nếu là Task Backend (Quy trình TDD thực chứng bắt buộc):**
+        1. **Thiết lập Kịch bản Kiểm thử Rút gọn (Short Test Scenarios):** Trước khi viết bất kỳ code logic nào, xác định 3-5 kịch bản test cốt lõi:
+           - *Happy Path:* Dữ liệu chuẩn, chạy thành công.
+           - *Failure Modes & Edge Cases (Quan trọng nhất):* Dữ liệu sai cấu trúc/validation fail, lỗi kết nối DB, lỗi API bên thứ ba.
+        2. **Viết Unit Test trước (Test-First):**
+           - Triển khai các kịch bản này thành các file unit test (sử dụng Jest và các bộ mock/testing utility của NestJS).
+           - Chạy test để thấy test FAIL (đúng tinh thần Red-Green-Refactor).
+           - *Quy tắc Coverage:* Tuyệt đối không cố gắng đạt 100% coverage vô nghĩa cho boilerplate code (DTOs, entities). Chỉ tập trung chứng thực business logic lõi và các trường hợp lỗi (failure paths) để tối ưu hóa thời gian và tài nguyên.
+        3. **Viết Code Nghiệp vụ để pass Test:**
+           - Viết code logic tối giản để các kịch bản test chuyển sang màu xanh (Green).
+           - Tối ưu hóa code (Refactor) nếu cần thiết.
+
+   c. **Execute Changes:**
+      - Tiến hành các chỉnh sửa code cần thiết một cách tập trung và cô lập.
+      - Đảm bảo tuân thủ nguyên tắc "Cô lập sự thay đổi" (Clean Architecture).
+
+   d. **Mark Task Complete:**
+      - Đánh dấu hoàn thành task trong file tasks: `- [ ]` -> `- [x]`.
+      - Chuyển sang task tiếp theo.
 
    **Pause if:**
    - Task is unclear → ask for clarification

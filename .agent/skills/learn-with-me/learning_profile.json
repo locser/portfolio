@@ -1,0 +1,27 @@
+{
+  "developer_profile": {
+    "experience_years": 3,
+    "core_skills": [
+      "NestJS",
+      "Java Core"
+    ],
+    "learning_style": "Thực chứng, thực hành sâu, phản biện trực diện, không thích lịch sử dông dài"
+  },
+  "knowledge_map": {
+    "weak_points": [
+      {
+        "topic": "TypeORM Connection Pool Starvation",
+        "discovered_at": "2026-05-22",
+        "reason": "Có xu hướng muốn tăng max pool vô tội vạ thay vì giải quyết connection leak và tối ưu hóa thời gian giữ transaction."
+      }
+    ],
+    "mastered_topics": [
+      "SQL NULL Comparison & Three-Valued Logic (3VL)"
+    ]
+  },
+  "recent_interactions": {
+    "total_lessons": 2,
+    "last_reviewed_at": "2026-05-24T04:52:00Z",
+    "notes": "Đã thảo luận sâu sắc về so sánh NULL trong SQL, mô hình Logic 3 trị (3VL), và cơ chế lưu trữ byte vật lý (Null Bitmap) của Database Engine. Đồng thời ghi nhận góp ý cải tiến UX thiết kế Lab cho các phiên sau."
+  }
+}
