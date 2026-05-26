@@ -13,6 +13,11 @@
         "topic": "TypeORM Connection Pool Starvation",
         "discovered_at": "2026-05-22",
         "reason": "Có xu hướng muốn tăng max pool vô tội vạ thay vì giải quyết connection leak và tối ưu hóa thời gian giữ transaction."
+      },
+      {
+        "topic": "Cookie SameSite & HTTP Redirect 302 in Cross-Domain Auth",
+        "discovered_at": "2026-05-26",
+        "reason": "Chưa nắm rõ cơ chế tự động gửi Cookie của trình duyệt trong các cú nhảy redirect và vai trò của SameSite Lax/Strict dẫn đến rủi ro cấu hình sai gây vỡ luồng SSO."
       }
     ],
     "mastered_topics": [
@@ -20,8 +25,8 @@
     ]
   },
   "recent_interactions": {
-    "total_lessons": 2,
-    "last_reviewed_at": "2026-05-24T04:52:00Z",
-    "notes": "Đã thảo luận sâu sắc về so sánh NULL trong SQL, mô hình Logic 3 trị (3VL), và cơ chế lưu trữ byte vật lý (Null Bitmap) của Database Engine. Đồng thời ghi nhận góp ý cải tiến UX thiết kế Lab cho các phiên sau."
+    "total_lessons": 3,
+    "last_reviewed_at": "2026-05-26T07:21:00Z",
+    "notes": "Đã thảo luận sâu sắc về bản chất của SSO liên thông domain (Federated SSO), mổ xẻ cơ chế nhảy 302 Redirect kết hợp đính kèm Cookie tự động của trình duyệt. Đồng thời thiết kế và hoàn thiện Lab sso-express tích hợp tính năng nâng cao Back-Channel Logout để giải quyết bài toán Single Sign-Out (SLO)."
   }
 }

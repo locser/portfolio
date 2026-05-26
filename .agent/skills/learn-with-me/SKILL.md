@@ -85,7 +85,7 @@ Quy trình mặc định gồm 4 giai đoạn. **Dev có thể skip bất kỳ g
 Kết thúc phiên học (khi Dev gõ `/end-session` hoặc `/end`), hệ thống SHALL thực thi **theo thứ tự bắt buộc**:
 
 #### Bước 4.1: Tạo báo cáo học tập
-Dùng **tool `write_to_file`** để tạo 2 tệp tại đường dẫn tuyệt đối `c:/ai-projects/my-porfolio/portfolio/learning/labs/<keyword>/`:
+Dùng **tool `write_to_file`** để tạo 2 tệp tại đường dẫn tuyệt đối `c:/ai-projects/learning-labs/labs/<keyword>/`:
 1. `learning_report.md` — theo template Section 📝 bên dưới.
 2. `reproduce_guide.md` — theo template Section 📝 bên dưới.
 
@@ -172,7 +172,7 @@ Dưới đây là mỏ neo hành vi (few-shot example) để hệ thống bắt 
 > *"Kết thúc phiên. Đang thực hiện kết xuất tri thức..."*
 > *(Thực thi Bước 4.1: ghi `learning_report.md` và `reproduce_guide.md`)*
 > *(Thực thi Bước 4.2: ghi đè `learning_profile.json` với lesson count +1, weak_points mới nếu có)*
-> *"✅ Đã lưu báo cáo tại `learning/labs/<keyword>/`. Đã cập nhật hồ sơ học tập.*
+> *"✅ Đã lưu báo cáo tại `c:/ai-projects/learning-labs/labs/<keyword>/`. Đã cập nhật hồ sơ học tập.*
 >
 > *Tự kiểm điểm: Tôi chưa đề cập đến góc nhìn về [X] — điểm này cần đào sâu hơn ở phiên sau."*
 
