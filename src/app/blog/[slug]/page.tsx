@@ -5,6 +5,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import React from "react";
 import rehypeHighlight from "rehype-highlight";
 
+import CommentsSection from "@/src/components/CommentsSection";
 import ThemeToggle from "@/src/components/ThemeToggle";
 import ViewCounter from "@/src/components/ViewCounter";
 import {
@@ -289,6 +290,9 @@ export default function PostPage({ params }: PostPageProps) {
               </div>
             </div>
           )}
+
+          {/* Comments Section */}
+          <CommentsSection slug={post.slug} />
         </main>
 
         {/* Sticky Table of Contents Sidebar */}
