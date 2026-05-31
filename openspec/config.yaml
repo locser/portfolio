@@ -1,20 +1,25 @@
 schema: spec-driven
 
-# Project context (optional)
+# Project context
 # This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Tech stack: Next.js 14 (App Router), TypeScript, standard Tailwind CSS, Framer Motion, Zustand, React Query.
+  This is a minimalist, clean, and simple Developer Portfolio website.
+  - Localization / i18n is strictly NOT used. All UI texts, copies, and labels must be written directly as native strings in the code.
+  - Aesthetics: Gentle, soft pastel and light colors instead of highly complex dark-mode neon glassmorphism.
+  - Animations: Only subtle micro-animations for high-fidelity feel. No heavy or distracting 3D animation scripts.
+  - Structure: Modularized Next.js Server Components by default, Client Components only when client-side state or events are required.
 
-# Per-artifact rules (optional)
+# Per-artifact rules
 # Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - "Define clear, minimal project objectives."
+    - "Always include a 'Non-goals' section explicitly ruling out excessive visual bloat or unnecessary localization boilerplate."
+  design:
+    - "Outline exact component file structures, specifying whether each is a Server or Client Component."
+    - "Enforce zero translations or i18next references; all texts must be direct native strings."
+    - "Detail responsive layout handling (Mobile-first) and ensure gentle, pastel/soft colors are prioritized."
+  tasks:
+    - "Break tasks down to small chunks of maximum 2 hours."
+    - "Include verification steps running compilation/linter checks."

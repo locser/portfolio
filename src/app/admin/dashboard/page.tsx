@@ -8,9 +8,11 @@ import React from "react";
 
 import CreatePostForm from "@/src/components/CreatePostForm";
 import DeletePostButton from "@/src/components/DeletePostButton";
+import ForumAdminManager from "@/src/components/ForumAdminManager";
 import LogoutButton from "@/src/components/LogoutButton";
 import ThemeToggle from "@/src/components/ThemeToggle";
 import { verifySessionToken } from "@/src/lib/auth";
+import { getChannels } from "@/src/lib/forum";
 import { getAllPosts } from "@/src/lib/markdown";
 
 export const revalidate = 0; // Dynamic server rendering
@@ -46,6 +48,9 @@ export default function AdminDashboardPage() {
   // 4. Calculate Stats
   const totalPosts = posts.length;
   const totalViews = posts.reduce((sum, post) => sum + (views[post.slug] || 0), 0);
+
+  // 5. Fetch Forum Channels
+  const channels = getChannels();
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-300 font-sans selection:bg-zinc-800 selection:text-white transition-colors duration-300">
@@ -180,6 +185,9 @@ export default function AdminDashboardPage() {
 
         {/* Soạn thảo bài viết mới component */}
         <CreatePostForm />
+
+        {/* Quản lý danh mục diễn đàn */}
+        <ForumAdminManager initialChannels={channels} />
 
         {/* Posts List Section */}
         <div className="bg-zinc-900/20 border border-zinc-900 rounded-3xl overflow-hidden shadow-sm">

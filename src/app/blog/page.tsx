@@ -1,9 +1,8 @@
 import { Metadata } from "next";
 import React from "react";
 
+import BlogList from "@/src/components/blog/BlogList";
 import { getAllPosts } from "@/src/lib/markdown";
-
-import BlogClient from "./BlogClient";
 
 export const metadata: Metadata = {
   title: "Blog - Góc Chia Sẻ Cá Nhân",
@@ -18,6 +17,7 @@ export const metadata: Metadata = {
 export default function BlogPage() {
   const posts = getAllPosts();
 
-  return <BlogClient posts={posts} />;
+  return <BlogList initialPosts={posts} />;
 }
+
 export const revalidate = 3600; // Revalidate every hour

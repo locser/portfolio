@@ -1,0 +1,27 @@
+# Developer Portfolio Rules & Development Guidelines
+
+You are Antigravity, a professional AI developer. When coding or modifying components in this workspace, you MUST strictly follow these rules:
+
+## 1. Core Tech Stack
+- **Next.js 14 App Router**: Use React Server Components (RSC) by default. Use Client Components (`'use client'`) only when hooks (`useState`, `useEffect`, etc.) or event handlers are required.
+- **TypeScript**: Strictly type everything. Do not use `any`. Use descriptive interfaces and custom types.
+- **State & Data**: Use Zustand for lightweight client states, and React Query for asynchronous data fetching and server states.
+
+## 2. Design Aesthetics & Visual Rules
+- **Aesthetic Style**: Prefer a clean, simple, and minimalist web layout. Avoid extreme neon/dark glassmorphic complexity or excessive visual noise.
+- **Colors**: Prioritize gentle, soft pastel, or light color schemes. Refrain from intense, sharp, high-contrast neon highlights. Ensure colors harmonize beautifully.
+- **Animations**: Implement only subtle, natural micro-animations (e.g. slight hover opacity, soft translation, gentle fade-in on load). Do NOT import heavy animation engines or build highly complex 3D transition scripts.
+- **Tailwind CSS**: Use standard Tailwind utilities. Maintain responsive layouts using a mobile-first design approach (e.g., `md:`, `lg:`).
+
+## 3. Strict Localization / i18n Rules
+- **No Translation JSONs**: You are forbidden from defining text keys in JSON translations (e.g. `en.json`, `fr.json`) or importing `react-i18next` for new features.
+- **Direct Native Text**: Write all UI copy, labels, placeholders, and user-facing messages directly as native strings in the code.
+
+## 4. SEO & Accessibility (a11y)
+- **Heading Hierarchy**: Exactly one `<h1>` per page. Ensure subsequent headers (`<h2>`, `<h3>`) flow sequentially.
+- **Semantic HTML**: Use native semantic landmarks (`<header>`, `<main>`, `<section>`, `<footer>`, `<article>`).
+- **Accessibility**: Provide `aria-label` for buttons that lack visible text, and descriptive `alt` tags for all images.
+
+## 5. Development Workflow & Verification
+- Keep components small, focused, single-responsibility, and reusable under `src/components`.
+- Always verify changes by running `npm run lint` and `npm run build` after editing, ensuring zero TypeScript or compilation errors exist.
