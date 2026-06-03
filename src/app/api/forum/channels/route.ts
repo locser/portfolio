@@ -14,7 +14,7 @@ function checkAdminAuth(request: NextRequest): boolean {
 // 2. GET: Get all channels
 export async function GET() {
   try {
-    const channels = getChannels();
+    const channels = await getChannels();
     return NextResponse.json(channels);
   } catch (error) {
     console.error("GET channels error:", error);
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Tiêu đề và mô tả là bắt buộc" }, { status: 400 });
     }
 
-    const channels = getChannels();
+    const channels = await getChannels();
     const id = title
       .toLowerCase()
       .trim()
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     };
 
     channels.push(newChannel);
-    saveChannels(channels);
+    await saveChannels(channels);
 
     return NextResponse.json({ success: true, channel: newChannel });
   } catch (error) {
@@ -75,7 +75,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Thiếu thông tin cập nhật" }, { status: 400 });
     }
 
-    const channels = getChannels();
+    const channels = await getChannels();
     const index = channels.findIndex((c) => c.id === id);
 
     const existing = channels[index];
@@ -91,7 +91,7 @@ export async function PUT(request: NextRequest) {
       allowPublicTopics: allowPublicTopics !== false,
     };
 
-    saveChannels(channels);
+    await saveChannels(channels);
 
     return NextResponse.json({ success: true, channel: channels[index] });
   } catch (error) {
@@ -114,7 +114,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Mã danh mục là bắt buộc" }, { status: 400 });
     }
 
-    const channels = getChannels();
+    const channels = await getChannels();
     const filteredChannels = channels.filter((c) => c.id !== id);
 
     if (channels.length === filteredChannels.length) {
@@ -122,20 +122,20 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 1. Delete Channel
-    saveChannels(filteredChannels);
+    await saveChannels(filteredChannels);
 
     // 2. Cascade delete Topics of this channel
-    const topicsMap = getTopics();
+    const topicsMap = await getTopics();
     const channelTopics = topicsMap[id] || [];
     delete topicsMap[id];
-    saveTopics(topicsMap);
+    await saveTopics(topicsMap);
 
     // 3. Cascade delete Replies of all topics inside this channel
-    const repliesMap = getReplies();
+    const repliesMap = await getReplies();
     channelTopics.forEach((t) => {
       delete repliesMap[t.id];
     });
-    saveReplies(repliesMap);
+    await saveReplies(repliesMap);
 
     return NextResponse.json({ success: true, message: "Xóa danh mục thành công" });
   } catch (error) {

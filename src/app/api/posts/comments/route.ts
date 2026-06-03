@@ -1,11 +1,7 @@
-import fs from "fs";
-import path from "path";
-
 import { NextRequest, NextResponse } from "next/server";
 
+import { getDatabase } from "@/src/lib/mongodb";
 import { sanitizeInput } from "@/src/lib/utils";
-
-const commentsFilePath = path.join(process.cwd(), "src/data/post-comments.json");
 
 interface Comment {
   id: string;
@@ -21,32 +17,6 @@ interface ThreadedComment extends Comment {
   replies: Comment[];
 }
 
-// Helper to read comments safely
-function readComments(): Record<string, Comment[]> {
-  try {
-    if (!fs.existsSync(commentsFilePath)) {
-      fs.writeFileSync(commentsFilePath, JSON.stringify({}), "utf8");
-      return {};
-    }
-    const content = fs.readFileSync(commentsFilePath, "utf8");
-    return JSON.parse(content || "{}");
-  } catch (error) {
-    console.error("Error reading comments file:", error);
-    return {};
-  }
-}
-
-// Helper to write comments safely
-function writeComments(comments: Record<string, Comment[]>): boolean {
-  try {
-    fs.writeFileSync(commentsFilePath, JSON.stringify(comments, null, 2), "utf8");
-    return true;
-  } catch (error) {
-    console.error("Error writing comments file:", error);
-    return false;
-  }
-}
-
 // GET /api/posts/comments?slug=<slug>
 export async function GET(request: NextRequest) {
   try {
@@ -60,8 +30,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const allComments = readComments();
-    const postComments = allComments[slug] || [];
+    const db = await getDatabase();
+    const collection = db.collection("post_comments");
+    const docs = await collection.find({ slug }).toArray();
+
+    // Map _id back to id for API compatibility
+    const postComments: Comment[] = docs.map((doc) => ({
+      id: doc._id.toString(),
+      slug: doc.slug,
+      authorName: doc.authorName,
+      authorEmail: doc.authorEmail || undefined,
+      content: doc.content,
+      parentId: doc.parentId,
+      createdAt: doc.createdAt,
+    }));
 
     // Separate root comments and replies
     const roots = postComments.filter((c) => !c.parentId) as ThreadedComment[];
@@ -110,8 +92,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Comment text is required" }, { status: 400 });
     }
 
-    const allComments = readComments();
-    const postComments = allComments[slug] || [];
+    const db = await getDatabase();
+    const collection = db.collection("post_comments");
+
+    const docs = await collection.find({ slug }).toArray();
+    const postComments: Comment[] = docs.map((doc) => ({
+      id: doc._id.toString(),
+      slug: doc.slug,
+      authorName: doc.authorName,
+      authorEmail: doc.authorEmail || undefined,
+      content: doc.content,
+      parentId: doc.parentId,
+      createdAt: doc.createdAt,
+    }));
 
     // Enforce 2-level comment hierarchy limit
     let resolvedParentId: string | null = parentId || null;
@@ -133,28 +126,29 @@ export async function POST(request: NextRequest) {
     const newId = Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
 
     // Create and sanitize comment
-    const newComment: Comment = {
-      id: newId,
+    const newComment = {
+      _id: newId,
       slug,
       authorName: sanitizeInput(authorName.trim()),
-      authorEmail: authorEmail ? sanitizeInput(authorEmail.trim()) : undefined,
+      authorEmail: authorEmail ? sanitizeInput(authorEmail.trim()) : null,
       content: sanitizeInput(content.trim()),
       parentId: resolvedParentId,
       createdAt: new Date().toISOString(),
     };
 
-    postComments.push(newComment);
-    allComments[slug] = postComments;
+    await collection.insertOne(newComment as any);
 
-    const success = writeComments(allComments);
-    if (!success) {
-      return NextResponse.json(
-        { error: "Failed to persist comment" },
-        { status: 500 }
-      );
-    }
+    const returnComment: Comment = {
+      id: newComment._id,
+      slug: newComment.slug,
+      authorName: newComment.authorName,
+      authorEmail: newComment.authorEmail || undefined,
+      content: newComment.content,
+      parentId: newComment.parentId,
+      createdAt: newComment.createdAt,
+    };
 
-    return NextResponse.json(newComment, { status: 201 });
+    return NextResponse.json(returnComment, { status: 201 });
   } catch (error) {
     console.error("Error in POST comments API:", error);
     return NextResponse.json(

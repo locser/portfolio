@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Yêu cầu mã danh mục (channelId)" }, { status: 400 });
     }
 
-    const topicsMap = getTopics();
+    const topicsMap = await getTopics();
     const topicsList = topicsMap[channelId] || [];
 
     // Sorting logic
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate if the channel exists
-    const channels = getChannels();
+    const channels = await getChannels();
     const channel = channels.find((c) => c.id === channelId);
 
     if (!channel) {
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const topicsMap = getTopics();
+    const topicsMap = await getTopics();
     const channelTopics = topicsMap[channelId] || [];
 
     const id = "topic-" + Date.now() + "-" + Math.random().toString(36).slice(-4);
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     channelTopics.push(newTopic);
     topicsMap[channelId] = channelTopics;
-    saveTopics(topicsMap);
+    await saveTopics(topicsMap);
 
     return NextResponse.json({ success: true, topic: newTopic });
   } catch (error) {

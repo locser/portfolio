@@ -18,7 +18,7 @@ interface PageProps {
 
 // Generate dynamic metadata for SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const topicsMap = getTopics();
+  const topicsMap = await getTopics();
   const channelTopics = topicsMap[params.channelId] || [];
   const topic = channelTopics.find((t) => t.id === params.topicId);
 
@@ -34,18 +34,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function TopicPage({ params }: PageProps) {
+export default async function TopicPage({ params }: PageProps) {
   const { channelId, topicId } = params;
 
   // 1. Validate Channel
-  const channels = getChannels();
+  const channels = await getChannels();
   const channel = channels.find((c) => c.id === channelId);
   if (!channel) {
     notFound();
   }
 
   // 2. Validate and Load Topic
-  const topicsMap = getTopics();
+  const topicsMap = await getTopics();
   const channelTopics = topicsMap[channelId] || [];
   const topicIndex = channelTopics.findIndex((t) => t.id === topicId);
 
@@ -58,10 +58,10 @@ export default function TopicPage({ params }: PageProps) {
   topic.views = (topic.views || 0) + 1;
   channelTopics[topicIndex] = topic;
   topicsMap[channelId] = channelTopics;
-  saveTopics(topicsMap);
+  await saveTopics(topicsMap);
 
   // 4. Fetch Replies/Comments
-  const repliesMap = getReplies();
+  const repliesMap = await getReplies();
   const topicReplies = repliesMap[topicId] || [];
 
   return (

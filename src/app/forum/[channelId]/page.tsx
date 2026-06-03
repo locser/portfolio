@@ -19,7 +19,7 @@ interface PageProps {
 
 // Generate dynamic metadata for SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const channels = getChannels();
+  const channels = await getChannels();
   const channel = channels.find((c) => c.id === params.channelId);
   
   if (!channel) {
@@ -34,11 +34,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function ChannelPage({ params }: PageProps) {
+export default async function ChannelPage({ params }: PageProps) {
   const { channelId } = params;
   
   // 1. Fetch channel info
-  const channels = getChannels();
+  const channels = await getChannels();
   const channel = channels.find((c) => c.id === channelId);
 
   if (!channel) {
@@ -46,7 +46,7 @@ export default function ChannelPage({ params }: PageProps) {
   }
 
   // 2. Fetch topics
-  const topicsMap = getTopics();
+  const topicsMap = await getTopics();
   const topicsList = topicsMap[channelId] || [];
 
   // Sort by newest by default on server load

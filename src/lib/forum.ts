@@ -1,5 +1,4 @@
-import fs from "fs";
-import path from "path";
+import { getDatabase } from "./mongodb";
 
 // 1. Entity Interfaces
 export interface Channel {
@@ -31,86 +30,187 @@ export interface Reply {
   createdAt: string;
 }
 
-// 2. Storage Paths
-const DATA_DIR = path.join(process.cwd(), "src/data/forum");
-const CHANNELS_FILE = path.join(DATA_DIR, "channels.json");
-const TOPICS_FILE = path.join(DATA_DIR, "topics.json");
-const REPLIES_FILE = path.join(DATA_DIR, "replies.json");
-
-function ensureDirectoryAndFiles() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(CHANNELS_FILE)) {
-    fs.writeFileSync(CHANNELS_FILE, JSON.stringify([], null, 2), "utf8");
-  }
-  if (!fs.existsSync(TOPICS_FILE)) {
-    fs.writeFileSync(TOPICS_FILE, JSON.stringify({}, null, 2), "utf8");
-  }
-  if (!fs.existsSync(REPLIES_FILE)) {
-    fs.writeFileSync(REPLIES_FILE, JSON.stringify({}, null, 2), "utf8");
-  }
-}
-
-// 3. Channels IO Helpers
-export function getChannels(): Channel[] {
-  ensureDirectoryAndFiles();
+// 2. Channels IO Helpers
+export async function getChannels(): Promise<Channel[]> {
   try {
-    const data = fs.readFileSync(CHANNELS_FILE, "utf8");
-    return JSON.parse(data || "[]");
+    const db = await getDatabase();
+    const docs = await db.collection("forum_channels").find().toArray();
+    return docs.map((doc) => ({
+      id: doc._id.toString(),
+      title: doc.title,
+      description: doc.description,
+      allowPublicTopics: doc.allowPublicTopics,
+      createdAt: doc.createdAt,
+    }));
   } catch (error) {
-    console.error("Failed to read channels file:", error);
+    console.error("Failed to read channels from MongoDB:", error);
     return [];
   }
 }
 
-export function saveChannels(channels: Channel[]): void {
-  ensureDirectoryAndFiles();
+export async function saveChannels(channels: Channel[]): Promise<void> {
   try {
-    fs.writeFileSync(CHANNELS_FILE, JSON.stringify(channels, null, 2), "utf8");
+    const db = await getDatabase();
+    if (channels.length === 0) {
+      await db.collection("forum_channels").deleteMany({});
+      return;
+    }
+
+    const bulkOps = channels.map((c) => ({
+      replaceOne: {
+        filter: { _id: c.id },
+        replacement: {
+          _id: c.id,
+          title: c.title,
+          description: c.description,
+          allowPublicTopics: c.allowPublicTopics,
+          createdAt: c.createdAt,
+        },
+        upsert: true,
+      },
+    }));
+
+    const ids = channels.map((c) => c.id);
+    await db.collection("forum_channels").deleteMany({ _id: { $nin: ids as any } });
+    await db.collection("forum_channels").bulkWrite(bulkOps as any);
   } catch (error) {
-    console.error("Failed to write channels file:", error);
+    console.error("Failed to write channels to MongoDB:", error);
   }
 }
 
-// 4. Topics IO Helpers
-export function getTopics(): Record<string, Topic[]> {
-  ensureDirectoryAndFiles();
+// 3. Topics IO Helpers
+export async function getTopics(): Promise<Record<string, Topic[]>> {
   try {
-    const data = fs.readFileSync(TOPICS_FILE, "utf8");
-    return JSON.parse(data || "{}");
+    const db = await getDatabase();
+    const docs = await db.collection("forum_topics").find().toArray();
+    const map: Record<string, Topic[]> = {};
+    docs.forEach((doc) => {
+      const topic: Topic = {
+        id: doc._id.toString(),
+        channelId: doc.channelId,
+        title: doc.title,
+        authorName: doc.authorName,
+        content: doc.content,
+        createdAt: doc.createdAt,
+        upvotes: doc.upvotes || 0,
+        downvotes: doc.downvotes || 0,
+        views: doc.views || 0,
+        replyCount: doc.replyCount || 0,
+      };
+      if (!map[topic.channelId]) {
+        map[topic.channelId] = [];
+      }
+      map[topic.channelId]!.push(topic);
+    });
+    return map;
   } catch (error) {
-    console.error("Failed to read topics file:", error);
+    console.error("Failed to read topics from MongoDB:", error);
     return {};
   }
 }
 
-export function saveTopics(topics: Record<string, Topic[]>): void {
-  ensureDirectoryAndFiles();
+export async function saveTopics(topicsMap: Record<string, Topic[]>): Promise<void> {
   try {
-    fs.writeFileSync(TOPICS_FILE, JSON.stringify(topics, null, 2), "utf8");
+    const db = await getDatabase();
+    const allTopics: Topic[] = [];
+    for (const list of Object.values(topicsMap)) {
+      allTopics.push(...list);
+    }
+
+    if (allTopics.length === 0) {
+      await db.collection("forum_topics").deleteMany({});
+      return;
+    }
+
+    const bulkOps = allTopics.map((t) => ({
+      replaceOne: {
+        filter: { _id: t.id },
+        replacement: {
+          _id: t.id,
+          channelId: t.channelId,
+          title: t.title,
+          authorName: t.authorName,
+          content: t.content,
+          createdAt: t.createdAt,
+          upvotes: t.upvotes,
+          downvotes: t.downvotes,
+          views: t.views,
+          replyCount: t.replyCount,
+        },
+        upsert: true,
+      },
+    }));
+
+    const ids = allTopics.map((t) => t.id);
+    await db.collection("forum_topics").deleteMany({ _id: { $nin: ids as any } });
+    await db.collection("forum_topics").bulkWrite(bulkOps as any);
   } catch (error) {
-    console.error("Failed to write topics file:", error);
+    console.error("Failed to write topics to MongoDB:", error);
   }
 }
 
-// 5. Replies IO Helpers
-export function getReplies(): Record<string, Reply[]> {
-  ensureDirectoryAndFiles();
+// 4. Replies IO Helpers
+export async function getReplies(): Promise<Record<string, Reply[]>> {
   try {
-    const data = fs.readFileSync(REPLIES_FILE, "utf8");
-    return JSON.parse(data || "{}");
+    const db = await getDatabase();
+    const docs = await db.collection("forum_replies").find().toArray();
+    const map: Record<string, Reply[]> = {};
+    docs.forEach((doc) => {
+      const reply: Reply = {
+        id: doc._id.toString(),
+        authorName: doc.authorName,
+        authorEmail: doc.authorEmail || undefined,
+        content: doc.content,
+        createdAt: doc.createdAt,
+      };
+      const topicId = doc.topicId;
+      if (!map[topicId]) {
+        map[topicId] = [];
+      }
+      map[topicId]!.push(reply);
+    });
+    return map;
   } catch (error) {
-    console.error("Failed to read replies file:", error);
+    console.error("Failed to read replies from MongoDB:", error);
     return {};
   }
 }
 
-export function saveReplies(replies: Record<string, Reply[]>): void {
-  ensureDirectoryAndFiles();
+export async function saveReplies(repliesMap: Record<string, Reply[]>): Promise<void> {
   try {
-    fs.writeFileSync(REPLIES_FILE, JSON.stringify(replies, null, 2), "utf8");
+    const db = await getDatabase();
+    const allReplies: { id: string; topicId: string; reply: Reply }[] = [];
+    for (const [topicId, list] of Object.entries(repliesMap)) {
+      list.forEach((reply) => {
+        allReplies.push({ id: reply.id, topicId, reply });
+      });
+    }
+
+    if (allReplies.length === 0) {
+      await db.collection("forum_replies").deleteMany({});
+      return;
+    }
+
+    const bulkOps = allReplies.map((item) => ({
+      replaceOne: {
+        filter: { _id: item.id },
+        replacement: {
+          _id: item.id,
+          topicId: item.topicId,
+          authorName: item.reply.authorName,
+          authorEmail: item.reply.authorEmail || null,
+          content: item.reply.content,
+          createdAt: item.reply.createdAt,
+        },
+        upsert: true,
+      },
+    }));
+
+    const ids = allReplies.map((item) => item.id);
+    await db.collection("forum_replies").deleteMany({ _id: { $nin: ids as any } });
+    await db.collection("forum_replies").bulkWrite(bulkOps as any);
   } catch (error) {
-    console.error("Failed to write replies file:", error);
+    console.error("Failed to write replies to MongoDB:", error);
   }
 }
+

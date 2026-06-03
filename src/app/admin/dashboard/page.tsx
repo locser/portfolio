@@ -17,7 +17,7 @@ import { getAllPosts } from "@/src/lib/markdown";
 
 export const revalidate = 0; // Dynamic server rendering
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
   const cookieStore = cookies();
   const sessionToken = cookieStore.get("admin_session")?.value;
 
@@ -50,7 +50,7 @@ export default function AdminDashboardPage() {
   const totalViews = posts.reduce((sum, post) => sum + (views[post.slug] || 0), 0);
 
   // 5. Fetch Forum Channels
-  const channels = getChannels();
+  const channels = await getChannels();
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-300 font-sans selection:bg-zinc-800 selection:text-white transition-colors duration-300">

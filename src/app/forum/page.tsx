@@ -12,9 +12,9 @@ export const metadata: Metadata = {
   description: "Không gian thảo luận, chia sẻ kiến thức công nghệ và giải đáp thắc mắc cùng cộng đồng.",
 };
 
-export default function ForumPage() {
-  const channels = getChannels();
-  const topicsMap = getTopics();
+export default async function ForumPage() {
+  const channels = await getChannels();
+  const topicsMap = await getTopics();
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black-100 text-zinc-800 dark:text-zinc-300 font-sans selection:bg-zinc-200 dark:selection:bg-zinc-800 selection:text-zinc-900 dark:selection:text-white transition-colors duration-300">

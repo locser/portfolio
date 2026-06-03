@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Tham số bình chọn không hợp lệ" }, { status: 400 });
     }
 
-    const topicsMap = getTopics();
+    const topicsMap = await getTopics();
     const channelTopics = topicsMap[channelId] || [];
     const topicIndex = channelTopics.findIndex((t) => t.id === topicId);
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     channelTopics[topicIndex] = topic;
     topicsMap[channelId] = channelTopics;
-    saveTopics(topicsMap);
+    await saveTopics(topicsMap);
 
     return NextResponse.json({
       success: true,

@@ -1,49 +1,33 @@
-import fs from "fs";
-import path from "path";
-
 import { NextRequest, NextResponse } from "next/server";
 
-const viewsFilePath = path.join(process.cwd(), "src/data/post-views.json");
-
-// Helper function to read views safely
-function readViews(): Record<string, number> {
-  try {
-    if (!fs.existsSync(viewsFilePath)) {
-      fs.writeFileSync(viewsFilePath, JSON.stringify({}), "utf8");
-      return {};
-    }
-    const content = fs.readFileSync(viewsFilePath, "utf8");
-    return JSON.parse(content || "{}");
-  } catch (error) {
-    console.error("Error reading views file:", error);
-    return {};
-  }
-}
-
-// Helper function to write views safely
-function writeViews(views: Record<string, number>): boolean {
-  try {
-    fs.writeFileSync(viewsFilePath, JSON.stringify(views, null, 2), "utf8");
-    return true;
-  } catch (error) {
-    console.error("Error writing views file:", error);
-    return false;
-  }
-}
+import { getDatabase } from "@/src/lib/mongodb";
 
 // GET /api/posts/views
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const slug = searchParams.get("slug");
+  try {
+    const { searchParams } = new URL(request.url);
+    const slug = searchParams.get("slug");
 
-  const views = readViews();
+    const db = await getDatabase();
+    const collection = db.collection("post_views");
 
-  if (slug) {
-    const postViews = views[slug] || 0;
-    return NextResponse.json({ slug, views: postViews });
+    if (slug) {
+      const doc = await collection.findOne({ _id: slug as any });
+      const postViews = doc ? (doc.views as number) : 0;
+      return NextResponse.json({ slug, views: postViews });
+    }
+
+    const docs = await collection.find().toArray();
+    const viewsMap: Record<string, number> = {};
+    docs.forEach((doc) => {
+      viewsMap[doc._id.toString()] = doc.views as number;
+    });
+
+    return NextResponse.json(viewsMap);
+  } catch (error) {
+    console.error("GET views error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-
-  return NextResponse.json(views);
 }
 
 // POST /api/posts/views
@@ -59,19 +43,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const views = readViews();
-    const currentViews = views[slug] || 0;
-    const newViews = currentViews + 1;
-    views[slug] = newViews;
+    const db = await getDatabase();
+    const collection = db.collection("post_views");
 
-    const success = writeViews(views);
+    // Atomic increment
+    await collection.updateOne(
+      { _id: slug as any },
+      { $inc: { views: 1 } },
+      { upsert: true }
+    );
 
-    if (!success) {
-      return NextResponse.json(
-        { error: "Failed to update views count" },
-        { status: 500 }
-      );
-    }
+    const doc = await collection.findOne({ _id: slug as any });
+    const newViews = doc ? (doc.views as number) : 1;
 
     return NextResponse.json({ success: true, slug, views: newViews });
   } catch (error) {

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Yêu cầu mã danh mục và mã chủ đề" }, { status: 400 });
     }
 
-    const topicsMap = getTopics();
+    const topicsMap = await getTopics();
     const channelTopics = topicsMap[channelId] || [];
     const topicIndex = channelTopics.findIndex((t) => t.id === topicId);
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     topic.views = (topic.views || 0) + 1;
     channelTopics[topicIndex] = topic;
     topicsMap[channelId] = channelTopics;
-    saveTopics(topicsMap);
+    await saveTopics(topicsMap);
 
     return NextResponse.json(topic);
   } catch (error) {
