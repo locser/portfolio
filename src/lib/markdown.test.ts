@@ -1,4 +1,5 @@
 import fs from "fs";
+
 import {
   getPostSlugs,
   getPostBySlug,
@@ -11,8 +12,6 @@ import {
 jest.mock("fs");
 
 describe("markdown.ts helper functions", () => {
-  const mockPostsDirectory = "src/data/posts";
-
   beforeEach(() => {
     jest.clearAllMocks();
   });

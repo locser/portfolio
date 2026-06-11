@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 import { hashPassword, createSessionToken, verifySessionToken } from "./auth";
 
 describe("auth.ts helper functions", () => {
@@ -72,7 +74,6 @@ describe("auth.ts helper functions", () => {
       const expiredTimestamp = Date.now() - 25 * 60 * 60 * 1000; // 25 hours ago (limit is 24 hours)
 
       // Manually construct an expired token with valid signature for that expired time
-      const crypto = require("crypto");
       const SECRET_KEY = process.env.ADMIN_SECRET || "loc-portfolio-secret-key-123456";
       const rawData = `${username}:${expiredTimestamp}`;
       const signature = crypto
