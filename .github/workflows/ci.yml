@@ -22,7 +22,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          push: ${{ github.ref == 'refs/heads/master' }}   # chỉ ship khi vào default branch
+          push: ${{ github.event_name == 'push' }}   # ship image khi push (beta), không ship trên PR
           tags: |
             ghcr.io/locser/portfolio:latest
             ghcr.io/locser/portfolio:${{ github.sha }}

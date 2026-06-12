@@ -3,7 +3,7 @@ node_modules
 .git
 .github
 coverage
-*.md
 Dockerfile
 docker-compose.yml
+.env
 .env*.local
