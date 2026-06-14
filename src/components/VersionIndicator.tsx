@@ -13,7 +13,7 @@ export default function VersionIndicator() {
   if (!mounted) return null;
 
   const version = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";
-  const buildDate = process.env.NEXT_PUBLIC_APP_BUILD_DATE || "2026-06-14";
+  const buildDate = process.env.NEXT_PUBLIC_APP_BUILD_DATE || "2026-06-14 23:30";
   const displayVersion = version.startsWith("v") ? version : `v${version}`;
 
   return (
