@@ -1,6 +1,6 @@
 services:
   web:
-    image: ghcr.io/locser/portfolio:latest
+    image: 100.93.231.78:5050/out_nha_it/my-blog:latest
     ports: ["8080:8080"]
     restart: unless-stopped
     volumes:

@@ -1,12 +1,48 @@
 stages:
   - test
+  - build
+  - deploy
 
+variables:
+  REGISTRY_IMAGE: "100.93.231.78:5050/out_nha_it/my-blog"
+
+# Stage 1: Chạy Jest Test
 test-job:
   stage: test
   image: node:20-alpine
   tags:
-    - docker # (Hoặc tag bạn đã gán lúc tạo Runner trên UI)
+    - docker
   script:
-    - node -v
-    - npm -v
-    - echo "GitLab Runner successfully verified and working!"
+    - npm ci
+    - npm run test -- --passWithNoTests # Bỏ qua nếu chưa viết test hoặc chạy test cơ bản
+
+# Stage 2: Build & Push Docker Image lên GitLab Container Registry
+build-job:
+  stage: build
+  image: docker:latest
+  tags:
+    - docker
+  services:
+    - name: docker:dind
+      command: ["--insecure-registry=100.93.231.78:5050"] # Cho phép registry HTTP không có SSL
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
+  script:
+    - docker build -t $REGISTRY_IMAGE:$CI_COMMIT_SHA -t $REGISTRY_IMAGE:latest .
+    - docker push $REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $REGISTRY_IMAGE:latest
+
+# Stage 3: Tự động deploy trên Mac Mini (thông qua host docker.sock)
+deploy-job:
+  stage: deploy
+  image: docker:latest
+  tags:
+    - docker
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
+  script:
+    # Do runner mount docker.sock của Mac Mini, các lệnh docker compose dưới đây
+    # sẽ chạy trực tiếp trên Docker daemon của Mac Mini.
+    - docker compose down || true
+    - docker compose pull
+    - docker compose up -d
