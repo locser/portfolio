@@ -1,0 +1,12 @@
+stages:
+  - test
+
+test-job:
+  stage: test
+  image: node:20-alpine
+  tags:
+    - docker # (Hoặc tag bạn đã gán lúc tạo Runner trên UI)
+  script:
+    - node -v
+    - npm -v
+    - echo "GitLab Runner successfully verified and working!"
