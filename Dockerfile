@@ -11,6 +11,15 @@ FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Add build arguments for version and build date
+ARG NEXT_PUBLIC_APP_VERSION
+ARG NEXT_PUBLIC_APP_BUILD_DATE
+
+# Set them as environment variables during build
+ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
+ENV NEXT_PUBLIC_APP_BUILD_DATE=$NEXT_PUBLIC_APP_BUILD_DATE
+
 RUN npm run build
 
 FROM base AS runner
