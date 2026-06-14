@@ -1,0 +1,10 @@
+services:
+  web:
+    image: ghcr.io/locser/portfolio:latest
+    ports: ["8080:8080"]
+    restart: unless-stopped
+    volumes:
+      - app-data:/app/src/data
+
+volumes:
+  app-data:
