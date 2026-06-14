@@ -22,13 +22,12 @@ build-job:
   image: docker:latest
   tags:
     - docker
-  services:
-    - name: docker:dind
-      command: ["--insecure-registry=100.93.231.78:5050"] # Cho phép registry HTTP không có SSL
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
   script:
-    - docker build -t $REGISTRY_IMAGE:$CI_COMMIT_SHA -t $REGISTRY_IMAGE:latest .
+    - export APP_VERSION=${CI_COMMIT_TAG:-$CI_COMMIT_SHORT_SHA}
+    - export BUILD_DATE=$(date +'%Y-%m-%d')
+    - docker build --build-arg NEXT_PUBLIC_APP_VERSION="$APP_VERSION" --build-arg NEXT_PUBLIC_APP_BUILD_DATE="$BUILD_DATE" -t $REGISTRY_IMAGE:$CI_COMMIT_SHA -t $REGISTRY_IMAGE:latest .
     - docker push $REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker push $REGISTRY_IMAGE:latest
 
