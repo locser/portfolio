@@ -12,13 +12,17 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Add build arguments for version and build date
+# Add build arguments for version, build date, commit SHA, and branch name
 ARG NEXT_PUBLIC_APP_VERSION
 ARG NEXT_PUBLIC_APP_BUILD_DATE
+ARG NEXT_PUBLIC_COMMIT_SHA
+ARG NEXT_PUBLIC_BRANCH_NAME
 
 # Set them as environment variables during build
 ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
 ENV NEXT_PUBLIC_APP_BUILD_DATE=$NEXT_PUBLIC_APP_BUILD_DATE
+ENV NEXT_PUBLIC_COMMIT_SHA=$NEXT_PUBLIC_COMMIT_SHA
+ENV NEXT_PUBLIC_BRANCH_NAME=$NEXT_PUBLIC_BRANCH_NAME
 
 RUN npm run build
 

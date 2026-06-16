@@ -5,16 +5,16 @@ stages:
 
 workflow:
   rules:
-    # 1. Chặn tất cả các tag push (không chạy pipeline cho tag)
-    - if: $CI_COMMIT_TAG
-      when: never
-    # 2. Chỉ chạy pipeline khi push lên nhánh beta, prod, hoặc main
-    - if: '$CI_COMMIT_BRANCH == "beta" || $CI_COMMIT_BRANCH == "prod" || $CI_COMMIT_BRANCH == "main"'
+    # Chỉ chạy pipeline khi push lên nhánh beta hoặc prod
+    - if: '$CI_COMMIT_BRANCH == "beta"'
+    - if: '$CI_COMMIT_BRANCH == "prod"'
 
 variables:
   REGISTRY_IMAGE: "100.93.231.78:5050/out_nha_it/my-blog"
 
-# Stage 1: Chạy Jest Test
+# ==========================================
+# Stage 1: Test Job
+# ==========================================
 test-job:
   stage: test
   image: node:20-alpine
@@ -22,13 +22,14 @@ test-job:
     - docker
   script:
     - npm ci
-    - npm run test -- --passWithNoTests # Bỏ qua nếu chưa viết test hoặc chạy test cơ bản
+    - npm run test -- --passWithNoTests
   rules:
     - if: '$CI_COMMIT_BRANCH == "beta" && $CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_COMMIT_BRANCH == "prod" && $CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
 
-# Stage 2: Build & Push Docker Image lên GitLab Container Registry
+# ==========================================
+# Stage 2: Build and Push Docker Image
+# ==========================================
 build-job:
   stage: build
   image: docker:latest
@@ -36,40 +37,74 @@ build-job:
     - docker
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
-
+  script:
+    # Cài đặt git để dùng git describe
+    - apk add --no-cache git
+    # Lấy các tag về máy runner để git describe hoạt động chính xác
+    - git fetch --tags || true
+    # Lấy version tự động qua tag, fallback về SHA nếu chưa đánh tag
+    - export APP_VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "v0.0.0-$CI_COMMIT_SHORT_SHA")
+    - export BUILD_DATE=$(date +'%Y-%m-%d %H:%M')
+    - export IMAGE_TAG=$CI_COMMIT_SHORT_SHA
+    - echo "Building image version $APP_VERSION for $CI_COMMIT_REF_NAME"
+    # Build image kèm theo các biến thông tin version
+    - |
+      docker build \
+        --build-arg NEXT_PUBLIC_APP_VERSION="$APP_VERSION" \
+        --build-arg NEXT_PUBLIC_APP_BUILD_DATE="$BUILD_DATE" \
+        --build-arg NEXT_PUBLIC_COMMIT_SHA="$CI_COMMIT_SHORT_SHA" \
+        --build-arg NEXT_PUBLIC_BRANCH_NAME="$CI_COMMIT_BRANCH" \
+        -t $REGISTRY_IMAGE:$IMAGE_TAG \
+        -t $REGISTRY_IMAGE:latest \
+        .
+    - docker push $REGISTRY_IMAGE:$IMAGE_TAG
+    - docker push $REGISTRY_IMAGE:latest
   rules:
     - if: '$CI_COMMIT_BRANCH == "beta" && $CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_COMMIT_BRANCH == "prod" && $CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
 
-  script:
-    - export APP_VERSION=${CI_COMMIT_TAG:-$CI_COMMIT_SHORT_SHA}
-    - export BUILD_DATE=$(date +'%Y-%m-%d %H:%M')
-    - docker build --build-arg NEXT_PUBLIC_APP_VERSION="$APP_VERSION" --build-arg NEXT_PUBLIC_APP_BUILD_DATE="$BUILD_DATE" -t $REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA -t $REGISTRY_IMAGE:latest .
-    - docker push $REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
-    - docker push $REGISTRY_IMAGE:latest
+# ==========================================
+# Stage 3: Deployment Jobs (GitLab Environments)
+# ==========================================
 
-# Stage 3: Tự động deploy trên Mac Mini (thông qua host docker.sock)
-deploy-job:
+# Môi trường Staging (beta branch) - Port 8080
+deploy-staging:
   stage: deploy
   image: docker:latest
   tags:
     - docker
+  environment:
+    name: staging
+    url: http://100.93.231.78:8080
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
-  
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "beta" && $CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_COMMIT_BRANCH == "prod" && $CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
-
   script:
-    # Xác định cổng và tên project dựa trên nhánh đang chạy
-    - if [ "$CI_COMMIT_BRANCH" = "beta" ]; then export HOST_PORT=8080; export COMPOSE_PROJECT_NAME=my-blog-beta; fi
-    - if [ "$CI_COMMIT_BRANCH" = "prod" ] || [ "$CI_COMMIT_BRANCH" = "main" ]; then export HOST_PORT=9080; export COMPOSE_PROJECT_NAME=my-blog-prod; fi
+    - export HOST_PORT=8080
+    - export COMPOSE_PROJECT_NAME=my-blog-staging
     - export IMAGE_TAG=$CI_COMMIT_SHORT_SHA
-    # Do runner mount docker.sock của Mac Mini, các lệnh docker compose dưới đây
-    # sẽ chạy trực tiếp trên Docker daemon của Mac Mini.
     - docker compose down || true
     - docker compose pull
     - docker compose up -d
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "beta" && $CI_PIPELINE_SOURCE == "push"'
+
+# Môi trường Production (prod branch) - Port 9080
+deploy-production:
+  stage: deploy
+  image: docker:latest
+  tags:
+    - docker
+  environment:
+    name: production
+    url: http://100.93.231.78:9080
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
+  script:
+    - export HOST_PORT=9080
+    - export COMPOSE_PROJECT_NAME=my-blog-production
+    - export IMAGE_TAG=$CI_COMMIT_SHORT_SHA
+    - docker compose down || true
+    - docker compose pull
+    - docker compose up -d
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "prod" && $CI_PIPELINE_SOURCE == "push"'
