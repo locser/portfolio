@@ -82,9 +82,14 @@ deploy-staging:
     - export HOST_PORT=8080
     - export COMPOSE_PROJECT_NAME=my-blog-staging
     - export IMAGE_TAG=$CI_COMMIT_SHORT_SHA
+    # Tìm và dừng container bất kỳ đang chiếm port 8080
+    - export BUSY_CONTAINER=$(docker ps -q --filter "publish=$HOST_PORT")
+    - if [ ! -z "$BUSY_CONTAINER" ]; then echo "Stopping container $BUSY_CONTAINER using port $HOST_PORT..."; docker stop $BUSY_CONTAINER && docker rm -f $BUSY_CONTAINER; fi
     - docker compose down || true
     - docker compose pull
     - docker compose up -d
+    # Dọn dẹp các image cũ/dangling để giải phóng ổ đĩa
+    - docker image prune -f
   rules:
     - if: '$CI_COMMIT_BRANCH == "beta" && $CI_PIPELINE_SOURCE == "push"'
 
@@ -103,8 +108,13 @@ deploy-production:
     - export HOST_PORT=9080
     - export COMPOSE_PROJECT_NAME=my-blog-production
     - export IMAGE_TAG=$CI_COMMIT_SHORT_SHA
+    # Tìm và dừng container bất kỳ đang chiếm port 9080
+    - export BUSY_CONTAINER=$(docker ps -q --filter "publish=$HOST_PORT")
+    - if [ ! -z "$BUSY_CONTAINER" ]; then echo "Stopping container $BUSY_CONTAINER using port $HOST_PORT..."; docker stop $BUSY_CONTAINER && docker rm -f $BUSY_CONTAINER; fi
     - docker compose down || true
     - docker compose pull
     - docker compose up -d
+    # Dọn dẹp các image cũ/dangling để giải phóng ổ đĩa
+    - docker image prune -f
   rules:
     - if: '$CI_COMMIT_BRANCH == "prod" && $CI_PIPELINE_SOURCE == "push"'
