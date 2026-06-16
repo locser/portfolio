@@ -18,6 +18,10 @@ export default function VersionIndicator() {
   const branch = process.env.NEXT_PUBLIC_BRANCH_NAME || "unknown";
   const displayVersion = version.startsWith("v") ? version : `v${version}`;
 
+  // Kiểm tra xem commit SHA đã nằm trong chuỗi version chưa để tránh hiển thị lặp
+  const hasCommitInVersion = version.includes(commit) || (commit !== "unknown" && version.includes(commit.substring(0, 7)));
+  const displayLabel = hasCommitInVersion ? displayVersion : `${displayVersion} (${commit.substring(0, 7)})`;
+
   return (
     <div className="fixed bottom-3 right-3 z-50 select-none pointer-events-auto">
       <div 
@@ -25,7 +29,7 @@ export default function VersionIndicator() {
         title={`Version: ${displayVersion}\nCommit: ${commit}\nBranch: ${branch}\nBuilt: ${buildDate}`}
       >
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400/80 mr-1.5 animate-pulse" />
-        {displayVersion} ({commit})
+        {displayLabel}
       </div>
     </div>
   );

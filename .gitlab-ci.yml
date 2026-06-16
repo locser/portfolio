@@ -42,8 +42,10 @@ build-job:
     - apk add --no-cache git
     # Lấy các tag về máy runner để git describe hoạt động chính xác
     - git fetch --tags || true
-    # Lấy version tự động qua tag, fallback về SHA nếu chưa đánh tag
-    - export APP_VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "v0.0.0-$CI_COMMIT_SHORT_SHA")
+    # Lấy version tự động qua tag, fallback về package.json version + dev + SHA nếu chưa đánh tag
+    - export PKG_VERSION=$(grep -m1 '"version":' package.json | cut -d'"' -f4 || echo "0.0.0")
+    - export GIT_DESCRIBE=$(git describe --tags --always --dirty 2>/dev/null || echo "$CI_COMMIT_SHORT_SHA")
+    - if echo "$GIT_DESCRIBE" | grep -E -q '^[0-9a-f]{7,40}(-dirty)?$'; then export APP_VERSION="v${PKG_VERSION}-dev-$GIT_DESCRIBE"; else export APP_VERSION="$GIT_DESCRIBE"; fi
     - export BUILD_DATE=$(date +'%Y-%m-%d %H:%M')
     - export IMAGE_TAG=$CI_COMMIT_SHORT_SHA
     - echo "Building image version $APP_VERSION for $CI_COMMIT_REF_NAME"
@@ -73,6 +75,7 @@ deploy-staging:
   image: docker:latest
   tags:
     - docker
+  resource_group: staging_deployment
   environment:
     name: staging
     url: http://100.93.231.78:8080
@@ -99,6 +102,7 @@ deploy-production:
   image: docker:latest
   tags:
     - docker
+  resource_group: production_deployment
   environment:
     name: production
     url: http://100.93.231.78:9080
