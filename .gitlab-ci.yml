@@ -78,20 +78,65 @@ deploy-staging:
   resource_group: staging_deployment
   environment:
     name: staging
-    url: http://100.93.231.78:8080
+    url: https://beta-blog.4me4you.io.vn/
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
   script:
     - export HOST_PORT=8080
     - export COMPOSE_PROJECT_NAME=my-blog-staging
     - export IMAGE_TAG=$CI_COMMIT_SHORT_SHA
-    # Tìm và dừng container bất kỳ đang chiếm port 8080
+    
+    # 1. State Backup: Lấy tag hiện tại của container đang chạy ổn định
+    - export PREVIOUS_TAG=$(docker inspect --format='{{index .Config.Image}}' ${COMPOSE_PROJECT_NAME}-web-1 2>/dev/null | cut -d':' -f2 || echo "")
+    - echo "Stable version currently running is [$PREVIOUS_TAG]"
+    
+    # 2. Xử lý xung đột cổng (Chỉ dừng container nếu không thuộc dự án compose này)
     - export BUSY_CONTAINER=$(docker ps -q --filter "publish=$HOST_PORT")
-    - if [ ! -z "$BUSY_CONTAINER" ]; then echo "Stopping container $BUSY_CONTAINER using port $HOST_PORT..."; docker stop $BUSY_CONTAINER && docker rm -f $BUSY_CONTAINER; fi
-    - docker compose down || true
+    - export CURRENT_CONTAINER=$(docker compose ps -q web 2>/dev/null || echo "")
+    - if [ ! -z "$BUSY_CONTAINER" ] && [ "$BUSY_CONTAINER" != "$CURRENT_CONTAINER" ]; then echo "Stopping conflict container $BUSY_CONTAINER..."; docker stop $BUSY_CONTAINER && docker rm -f $BUSY_CONTAINER; fi
+    
+    # 3. Pull image mới
     - docker compose pull
+    
+    # 4. Deploy nóng (Docker Compose tự recreate trong ~1s, không dùng down trước)
     - docker compose up -d
-    # Dọn dẹp các image cũ/dangling để giải phóng ổ đĩa
+    
+    # 5. Kiểm tra Healthcheck vòng lặp (Tương thích POSIX Shell của Runner)
+    - export CONTAINER_ID=$(docker compose ps -q web)
+    - export SUCCESS=0
+    - export i=1
+    - |
+      while [ $i -le 10 ]; do
+        STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CONTAINER_ID 2>/dev/null || echo "starting")
+        echo "Container health status: $STATUS (check $i/10)"
+        if [ "$STATUS" = "healthy" ]; then
+          echo "Deployment successful!"
+          SUCCESS=1
+          break
+        elif [ "$STATUS" = "unhealthy" ]; then
+          echo "Container is unhealthy! Boot failed."
+          break
+        fi
+        i=$((i + 1))
+        sleep 3
+      done
+      
+    # 6. Xử lý Rollback nếu deploy thất bại
+    - |
+      if [ $SUCCESS -ne 1 ]; then
+        echo "LỖI: Bản deploy mới không vượt qua Health Check!"
+        if [ ! -z "$PREVIOUS_TAG" ]; then
+          echo "Tiến hành Rollback về phiên bản cũ: $PREVIOUS_TAG..."
+          export IMAGE_TAG=$PREVIOUS_TAG
+          docker compose up -d
+          echo "Khôi phục hoàn tất."
+        else
+          echo "Không tìm thấy phiên bản dự phòng lịch sử. Hệ thống giữ nguyên trạng thái lỗi."
+        fi
+        exit 1
+      fi
+      
+    # 7. Dọn dẹp đĩa
     - docker image prune -f
   rules:
     - if: '$CI_COMMIT_BRANCH == "beta" && $CI_PIPELINE_SOURCE == "push"'
@@ -105,20 +150,66 @@ deploy-production:
   resource_group: production_deployment
   environment:
     name: production
-    url: http://100.93.231.78:9080
+    url: https://blog.4me4you.io.vn/
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
   script:
     - export HOST_PORT=9080
     - export COMPOSE_PROJECT_NAME=my-blog-production
     - export IMAGE_TAG=$CI_COMMIT_SHORT_SHA
-    # Tìm và dừng container bất kỳ đang chiếm port 9080
+    
+    # 1. State Backup: Lấy tag hiện tại của container đang chạy ổn định
+    - export PREVIOUS_TAG=$(docker inspect --format='{{index .Config.Image}}' ${COMPOSE_PROJECT_NAME}-web-1 2>/dev/null | cut -d':' -f2 || echo "")
+    - echo "Stable version currently running is [$PREVIOUS_TAG]"
+    
+    # 2. Xử lý xung đột cổng (Chỉ dừng container nếu không thuộc dự án compose này)
     - export BUSY_CONTAINER=$(docker ps -q --filter "publish=$HOST_PORT")
-    - if [ ! -z "$BUSY_CONTAINER" ]; then echo "Stopping container $BUSY_CONTAINER using port $HOST_PORT..."; docker stop $BUSY_CONTAINER && docker rm -f $BUSY_CONTAINER; fi
-    - docker compose down || true
+    - export CURRENT_CONTAINER=$(docker compose ps -q web 2>/dev/null || echo "")
+    - if [ ! -z "$BUSY_CONTAINER" ] && [ "$BUSY_CONTAINER" != "$CURRENT_CONTAINER" ]; then echo "Stopping conflict container $BUSY_CONTAINER..."; docker stop $BUSY_CONTAINER && docker rm -f $BUSY_CONTAINER; fi
+    
+    # 3. Pull image mới
     - docker compose pull
+    
+    # 4. Deploy nóng (Docker Compose tự recreate trong ~1s, không dùng down trước)
     - docker compose up -d
-    # Dọn dẹp các image cũ/dangling để giải phóng ổ đĩa
+    
+    # 5. Kiểm tra Healthcheck vòng lặp (Tương thích POSIX Shell của Runner)
+    - export CONTAINER_ID=$(docker compose ps -q web)
+    - export SUCCESS=0
+    - export i=1
+    - |
+      while [ $i -le 10 ]; do
+        STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CONTAINER_ID 2>/dev/null || echo "starting")
+        echo "Container health status: $STATUS (check $i/10)"
+        if [ "$STATUS" = "healthy" ]; then
+          echo "Deployment successful!"
+          SUCCESS=1
+          break
+        elif [ "$STATUS" = "unhealthy" ]; then
+          echo "Container is unhealthy! Boot failed."
+          break
+        fi
+        i=$((i + 1))
+        sleep 3
+      done
+      
+    # 6. Xử lý Rollback nếu deploy thất bại
+    - |
+      if [ $SUCCESS -ne 1 ]; then
+        echo "LỖI: Bản deploy mới không vượt qua Health Check!"
+        if [ ! -z "$PREVIOUS_TAG" ]; then
+          echo "Tiến hành Rollback về phiên bản cũ: $PREVIOUS_TAG..."
+          export IMAGE_TAG=$PREVIOUS_TAG
+          docker compose up -d
+          echo "Khôi phục hoàn tất."
+        else
+          echo "Không tìm thấy phiên bản dự phòng lịch sử. Hệ thống giữ nguyên trạng thái lỗi."
+        fi
+        exit 1
+      fi
+      
+    # 7. Dọn dẹp đĩa
+    - docker container prune -f
     - docker image prune -f
   rules:
     - if: '$CI_COMMIT_BRANCH == "prod" && $CI_PIPELINE_SOURCE == "push"'

@@ -6,6 +6,12 @@ services:
     restart: unless-stopped
     volumes:
       - app-data:/app/src/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http = require('http'); const req = http.request('http://localhost:8080/api/version', {timeout: 2000}, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
 volumes:
   app-data:
