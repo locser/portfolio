@@ -49,9 +49,12 @@ build-job:
     - export BUILD_DATE=$(date +'%Y-%m-%d %H:%M')
     - export IMAGE_TAG=$CI_COMMIT_SHORT_SHA
     - echo "Building image version $APP_VERSION for $CI_COMMIT_REF_NAME"
-    # Build image kèm theo các biến thông tin version
+    # Tải bản latest về làm cache nguồn (nếu có)
+    - docker pull $REGISTRY_IMAGE:latest || true
+    # Build image kèm theo cache-from và các biến thông tin version
     - |
       docker build \
+        --cache-from $REGISTRY_IMAGE:latest \
         --build-arg NEXT_PUBLIC_APP_VERSION="$APP_VERSION" \
         --build-arg NEXT_PUBLIC_APP_BUILD_DATE="$BUILD_DATE" \
         --build-arg NEXT_PUBLIC_COMMIT_SHA="$CI_COMMIT_SHORT_SHA" \
@@ -81,6 +84,17 @@ deploy-staging:
     url: http://100.93.231.78:8080
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
+    - |
+      notify_rollback() {
+        echo "Đang gửi cảnh báo lỗi đến Discord..."
+        if [ ! -z "$DISCORD_WEBHOOK_URL" ]; then
+          chmod +x .gitlab/scripts/notify-discord.sh
+          ENV_UPPER=$(echo $CI_ENVIRONMENT_NAME | tr 'a-z' 'A-Z')
+          .gitlab/scripts/notify-discord.sh "🚨 [$ENV_UPPER] DEPLOY THẤT BẠI" "15158332" "Hệ thống đã tự động rollback về phiên bản stable cũ." || true
+        else
+          echo "Không tìm thấy DISCORD_WEBHOOK_URL. Bỏ qua gửi cảnh báo."
+        fi
+      }
   script:
     - export HOST_PORT=8080
     - export COMPOSE_PROJECT_NAME=my-blog-staging
@@ -129,6 +143,7 @@ deploy-staging:
           echo "Tiến hành Rollback về phiên bản cũ: $PREVIOUS_TAG..."
           export IMAGE_TAG=$PREVIOUS_TAG
           docker compose up -d
+          notify_rollback
           echo "Khôi phục hoàn tất."
         else
           echo "Không tìm thấy phiên bản dự phòng lịch sử. Hệ thống giữ nguyên trạng thái lỗi."
@@ -137,6 +152,7 @@ deploy-staging:
       fi
       
     # 7. Dọn dẹp đĩa
+    - docker container prune -f
     - docker image prune -f
   rules:
     - if: '$CI_COMMIT_BRANCH == "beta" && $CI_PIPELINE_SOURCE == "push"'
@@ -153,6 +169,17 @@ deploy-production:
     url: https://blog.4me4you.io.vn/
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
+    - |
+      notify_rollback() {
+        echo "Đang gửi cảnh báo lỗi đến Discord..."
+        if [ ! -z "$DISCORD_WEBHOOK_URL" ]; then
+          chmod +x .gitlab/scripts/notify-discord.sh
+          ENV_UPPER=$(echo $CI_ENVIRONMENT_NAME | tr 'a-z' 'A-Z')
+          .gitlab/scripts/notify-discord.sh "🚨 [$ENV_UPPER] DEPLOY THẤT BẠI" "15158332" "Hệ thống đã tự động rollback về phiên bản stable cũ." || true
+        else
+          echo "Không tìm thấy DISCORD_WEBHOOK_URL. Bỏ qua gửi cảnh báo."
+        fi
+      }
   script:
     - export HOST_PORT=9080
     - export COMPOSE_PROJECT_NAME=my-blog-production
@@ -201,6 +228,7 @@ deploy-production:
           echo "Tiến hành Rollback về phiên bản cũ: $PREVIOUS_TAG..."
           export IMAGE_TAG=$PREVIOUS_TAG
           docker compose up -d
+          notify_rollback
           echo "Khôi phục hoàn tất."
         else
           echo "Không tìm thấy phiên bản dự phòng lịch sử. Hệ thống giữ nguyên trạng thái lỗi."
