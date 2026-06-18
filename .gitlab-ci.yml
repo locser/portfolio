@@ -78,7 +78,7 @@ deploy-staging:
   resource_group: staging_deployment
   environment:
     name: staging
-    url: https://beta-blog.4me4you.io.vn/
+    url: http://100.93.231.78:8080
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
   script:
