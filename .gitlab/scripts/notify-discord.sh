@@ -54,7 +54,7 @@ PAYLOAD=$(cat <<EOF
   "avatar_url": "https://about.gitlab.com/images/press/logo/svg/gitlab-icon-rgb.svg",
   "embeds": [{
     "title": "${P_TITLE}",
-    "description": "${P_DESC}",
+    "description": "${P_DESC}\\n\\n[🔗 Pipeline](${PIPELINE_URL})  |  [📜 Job Log](${JOB_URL})  |  [📝 Commit](${COMMIT_URL})",
     "url": "${PIPELINE_URL}",
     "color": ${COLOR},
     "thumbnail": {
@@ -101,29 +101,6 @@ PAYLOAD=$(cat <<EOF
       "text": "GitLab CI • Hệ thống giám sát tự động"
     },
     "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  }],
-  "components": [{
-    "type": 1,
-    "components": [
-      {
-        "type": 2,
-        "style": 5,
-        "label": "🔗 Pipeline",
-        "url": "${PIPELINE_URL}"
-      },
-      {
-        "type": 2,
-        "style": 5,
-        "label": "📜 Log",
-        "url": "${JOB_URL}"
-      },
-      {
-        "type": 2,
-        "style": 5,
-        "label": "📝 Commit",
-        "url": "${COMMIT_URL}"
-      }
-    ]
   }]
 }
 EOF
