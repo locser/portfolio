@@ -107,14 +107,21 @@ EOF
 )
 
 # --- Gửi ---
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+# Tạo file tạm để chứa response body từ Discord
+RESPONSE_FILE=$(mktemp)
+
+HTTP_CODE=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" \
   -X POST -H "Content-Type: application/json" \
   -d "${PAYLOAD}" \
   "${DISCORD_WEBHOOK_URL}")
 
 if [[ "${HTTP_CODE}" =~ ^2 ]]; then
   echo "✅ Discord alert sent (HTTP ${HTTP_CODE})"
+  rm -f "$RESPONSE_FILE"
 else
   echo "❌ Discord alert failed (HTTP ${HTTP_CODE})" >&2
+  echo "Chi tiết phản hồi lỗi từ Discord:" >&2
+  cat "$RESPONSE_FILE" >&2
+  rm -f "$RESPONSE_FILE"
   exit 1
 fi
