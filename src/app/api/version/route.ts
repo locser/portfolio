@@ -1,8 +1,18 @@
+import { NextResponse } from "next/server";
 
-// Ép Next.js không chạy thử lúc build (bỏ qua prerender)
-export const dynamic = "force-dynamic";
 
 export async function GET() {
-  // Cố tình ném lỗi chỉ khi chạy thực tế (runtime)
-  throw new Error("Lỗi giả lập tại runtime để test Rollback!");
+  return NextResponse.json( 
+    {
+      version: process.env.NEXT_PUBLIC_APP_VERSION || "v0.0.0",
+      commit: process.env.NEXT_PUBLIC_COMMIT_SHA || "unknown",
+      branch: process.env.NEXT_PUBLIC_BRANCH_NAME || "unknown",
+      buildDate: process.env.NEXT_PUBLIC_APP_BUILD_DATE || "unknown",
+    },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    }
+  );
 }

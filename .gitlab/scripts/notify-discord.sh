@@ -3,6 +3,7 @@
 # Gửi alert Discord cho GitLab CI (build fail / deploy fail)
 set -euo pipefail
 
+
 : "${DISCORD_WEBHOOK_URL:?Missing DISCORD_WEBHOOK_URL}"
 
 # --- Đọc biến GitLab (fallback an toàn) ---
@@ -107,7 +108,7 @@ EOF
 )
 
 # --- Gửi ---
-# Tạo file tạm để chứa response body từ Discord
+# Tạo file tạm để chứa response body
 RESPONSE_FILE=$(mktemp)
 
 HTTP_CODE=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" \
