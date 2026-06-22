@@ -1,5 +1,5 @@
 export async function register() {
-  const { httpRequestsTotal, httpRequestDuration, register } = await import('./lib/metrics');
+  const { httpRequestsTotal, httpRequestDuration } = await import('./lib/metrics');
 
   // Hook vào request lifecycle
   const originalFetch = global.fetch;
