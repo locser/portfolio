@@ -1,5 +1,8 @@
-import { register } from '@/src/lib/metrics';
 import { NextResponse } from 'next/server';
+
+import { register } from '@/src/lib/metrics';
+
+
 
 export async function GET() {
   try {
