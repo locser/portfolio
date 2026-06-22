@@ -3,6 +3,9 @@ services:
     image: 100.93.231.78:5050/out_nha_it/my-blog:${IMAGE_TAG:-latest}
     ports:
       - "${HOST_PORT:-8080}:8080"
+      - "8080:8080"   # staging
+      - "9080:9080"   # production
+
     restart: unless-stopped
     volumes:
       - app-data:/app/src/data
