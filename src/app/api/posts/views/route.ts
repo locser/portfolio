@@ -3,6 +3,8 @@ import path from "path";
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { withMetrics } from "@/src/lib/metrics";
+
 const viewsFilePath = path.join(process.cwd(), "src/data/post-views.json");
 
 // Helper function to read views safely
@@ -32,7 +34,7 @@ function writeViews(views: Record<string, number>): boolean {
 }
 
 // GET /api/posts/views
-export async function GET(request: NextRequest) {
+async function getHandler(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get("slug");
 
@@ -46,8 +48,10 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(views);
 }
 
+export const GET = withMetrics(getHandler, '/api/posts/views', 'GET');
+
 // POST /api/posts/views
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   try {
     const body = await request.json();
     const { slug } = body;
@@ -82,3 +86,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withMetrics(postHandler, '/api/posts/views', 'POST');

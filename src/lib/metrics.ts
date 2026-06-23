@@ -1,3 +1,4 @@
+import { type NextRequest, NextResponse } from 'next/server';
 import { collectDefaultMetrics, Counter, Gauge, Histogram, Registry } from 'prom-client';
 
 // Registry chia sẻ cho toàn app
@@ -43,3 +44,26 @@ export const activeConnections = new Gauge({
   help: 'Number of active connections',
   registers: [register],
 });
+
+// ───── withMetrics wrapper ─────
+export function withMetrics(
+  handler: (req: NextRequest) => Promise<NextResponse>,
+  route: string,
+  method: string,
+): (req: NextRequest) => Promise<NextResponse> {
+  return async (req: NextRequest): Promise<NextResponse> => {
+    const start = Date.now();
+    let status = '500';
+    try {
+      const response = await handler(req);
+      status = String(response.status);
+      return response;
+    } catch (err) {
+      throw err;
+    } finally {
+      const duration = (Date.now() - start) / 1000;
+      httpRequestDuration.labels(method, route, status).observe(duration);
+      httpRequestsTotal.labels(method, route, status).inc();
+    }
+  };
+}
