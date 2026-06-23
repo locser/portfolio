@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 
 import { register } from '@/src/lib/metrics';
 
+export const dynamic = 'force-dynamic';
+
 
 
 export async function GET() {
