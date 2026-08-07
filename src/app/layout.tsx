@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
+import VersionIndicator from "../components/VersionIndicator";
+
 import "./globals.css";
 import { Providers } from "./provider";
 import { defaultMetadata } from "./seo-config";
@@ -24,6 +26,7 @@ export default function RootLayout({
         className={`${inter.variable} font-sans antialiased bg-white dark:bg-black-100 transition-colors duration-300`}
       >
         <Providers>{children}</Providers>
+        <VersionIndicator />
       </body>
     </html>
   );

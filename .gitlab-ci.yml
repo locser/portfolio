@@ -1,0 +1,360 @@
+stages:
+  - test
+  - build
+  - deploy
+  - release
+
+workflow:
+  rules:
+    # Chỉ chạy pipeline khi push lên nhánh beta hoặc prod
+    - if: '$CI_COMMIT_BRANCH == "beta"'
+    - if: '$CI_COMMIT_BRANCH == "prod"'
+
+variables:
+  REGISTRY_IMAGE: "100.93.231.78:5050/out_nha_it/my-blog"
+  # ⭐ MỚI: Bảo npm lưu tarballs vào .npm/ để cache được
+  NPM_CONFIG_CACHE: ".npm"
+
+# ==========================================
+# ⭐ MỚI: CI Cache mặc định cho mọi job
+# - Key theo hash của package-lock.json
+# - Paths: .npm/ (tarballs) + node_modules/ (installed packages)
+# - Policy: pull (mỗi job sẽ override riêng)
+# ==========================================
+default:
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+      - node_modules/
+    policy: pull
+
+
+# ==========================================
+# Stage 1: Test Job
+# ==========================================
+test-job:
+  stage: test
+  image: node:20-alpine
+  tags:
+    - docker
+  cache:
+    # ⭐ MỚI: Job đầu tiên sẽ push cache để các job sau dùng
+    policy: pull-push
+  script:
+    - npm ci --prefer-offline
+    - npm run test -- --passWithNoTests
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "beta" && $CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_COMMIT_BRANCH == "prod" && $CI_PIPELINE_SOURCE == "push"'
+
+# ==========================================
+# Stage 2: Build and Push Docker Image
+# ==========================================
+build-job:
+  stage: build
+  image: docker:latest
+  tags:
+    - docker
+  cache:
+    # ⭐ MỚI: Job này cũng dùng cache npm để chạy nhanh hơn
+    policy: pull
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
+  script:
+    - apk add --no-cache git
+    - git fetch --tags || true
+    - export PKG_VERSION=$(grep -m1 '"version":' package.json | cut -d'"' -f4 || echo "0.1.0")
+    - export LATEST_TAG=$(git tag -l "v*" | sort -V | tail -n1 || echo "")
+    - |
+      if [ -z "$LATEST_TAG" ]; then
+        export NEXT_TAG="v$PKG_VERSION"
+      else
+        export BASE_VERSION=${LATEST_TAG#v}
+        export HIGHER_VERSION=$(printf "%s\n%s" "$PKG_VERSION" "$BASE_VERSION" | sort -V | tail -n1)
+        if [ "$HIGHER_VERSION" != "$BASE_VERSION" ]; then
+          export NEXT_TAG="v$PKG_VERSION"
+        else
+          export MAJOR=$(echo "$BASE_VERSION" | cut -d. -f1)
+          export MINOR=$(echo "$BASE_VERSION" | cut -d. -f2)
+          export PATCH=$(echo "$BASE_VERSION" | cut -d. -f3)
+          export NEXT_PATCH=$((PATCH + 1))
+          export NEXT_TAG="v$MAJOR.$MINOR.$NEXT_PATCH"
+        fi
+      fi
+    - echo "NEXT_TAG=$NEXT_TAG" > build.env
+    - export APP_VERSION=$NEXT_TAG
+    - export BUILD_DATE=$(date +'%Y-%m-%d %H:%M')
+    - export IMAGE_TAG=$NEXT_TAG
+    - echo "Building image version $APP_VERSION with tag $IMAGE_TAG for $CI_COMMIT_REF_NAME"
+
+    # ⭐ CẢI TIẾN: Pull CẢ 2 cache layer (cache image + latest image)
+    - docker pull $REGISTRY_IMAGE:cache || true
+    - docker pull $REGISTRY_IMAGE:latest || true
+
+    # ⭐ CẢI TIẾN: Build với cache từ :cache (BuildKit layer cache)
+    # → Cache hit khi Dockerfile + package-lock.json không đổi
+    - |
+      docker build \
+        --cache-from $REGISTRY_IMAGE:cache \
+        --cache-from $REGISTRY_IMAGE:latest \
+        --build-arg NEXT_PUBLIC_APP_VERSION="$APP_VERSION" \
+        --build-arg NEXT_PUBLIC_APP_BUILD_DATE="$BUILD_DATE" \
+        --build-arg NEXT_PUBLIC_COMMIT_SHA="$CI_COMMIT_SHORT_SHA" \
+        --build-arg NEXT_PUBLIC_BRANCH_NAME="$CI_COMMIT_BRANCH" \
+        -t $REGISTRY_IMAGE:$IMAGE_TAG \
+        -t $REGISTRY_IMAGE:latest \
+        .
+
+    - docker push $REGISTRY_IMAGE:$IMAGE_TAG
+    - docker push $REGISTRY_IMAGE:latest
+
+    # ⭐ MỚI: Build lại với cache-to để tạo cache image cho lần sau
+    # → Mode inline để registry cache hit rate cao nhất
+    - |
+      docker build \
+        --cache-from $REGISTRY_IMAGE:cache \
+        --cache-to type=inline \
+        --build-arg NEXT_PUBLIC_APP_VERSION="$APP_VERSION" \
+        --build-arg NEXT_PUBLIC_APP_BUILD_DATE="$BUILD_DATE" \
+        --build-arg NEXT_PUBLIC_COMMIT_SHA="$CI_COMMIT_SHORT_SHA" \
+        --build-arg NEXT_PUBLIC_BRANCH_NAME="$CI_COMMIT_BRANCH" \
+        -t $REGISTRY_IMAGE:cache \
+        .
+    - docker push $REGISTRY_IMAGE:cache
+  artifacts:
+    reports:
+      dotenv: build.env
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "beta" && $CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_COMMIT_BRANCH == "prod" && $CI_PIPELINE_SOURCE == "push"'
+
+# ==========================================
+# Stage 3: Deployment Jobs (GitLab Environments)
+# ==========================================
+
+# Môi trường Staging (beta branch) - Port 8080
+# ⚠️ Không khai báo cache: job chỉ chạy 'docker compose', không cần node_modules
+deploy-staging:
+  stage: deploy
+  image: docker:latest
+  tags:
+    - docker
+  resource_group: staging_deployment
+  environment:
+    name: staging
+    url: http://100.93.231.78:8080
+  before_script:
+    - apk add --no-cache bash curl
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
+    - |
+      notify_rollback() {
+        echo "Đang gửi cảnh báo lỗi đến Discord..."
+        if [ ! -z "$DISCORD_WEBHOOK_URL" ]; then
+          chmod +x .gitlab/scripts/notify-discord.sh
+          ENV_UPPER=$(echo $CI_ENVIRONMENT_NAME | tr 'a-z' 'A-Z')
+          .gitlab/scripts/notify-discord.sh "🚨 [$ENV_UPPER] DEPLOY THẤT BẠI" "15158332" "Hệ thống đã tự động rollback về phiên bản stable cũ." || true
+        else
+          echo "Không tìm thấy DISCORD_WEBHOOK_URL. Bỏ qua gửi cảnh báo."
+        fi
+      }
+  script:
+    - export HOST_PORT=8080
+    - export COMPOSE_PROJECT_NAME=my-blog-staging
+    - export IMAGE_TAG=${NEXT_TAG:-$CI_COMMIT_SHORT_SHA}
+
+    # 1. State Backup: Lấy tag hiện tại của container đang chạy ổn định
+    - export PREVIOUS_IMAGE=$(docker inspect --format='{{index .Config.Image}}' ${COMPOSE_PROJECT_NAME}-web-1 2>/dev/null || echo "")
+    - export PREVIOUS_TAG=${PREVIOUS_IMAGE##*:}
+    - echo "Stable version currently running is [$PREVIOUS_TAG]"
+
+    # 2. Xử lý xung đột cổng (Chỉ dừng container nếu không thuộc dự án compose này)
+    - export BUSY_CONTAINER=$(docker ps -q --filter "publish=$HOST_PORT")
+    - export CURRENT_CONTAINER=$(docker compose ps -q web 2>/dev/null || echo "")
+    - if [ ! -z "$BUSY_CONTAINER" ] && [ "$BUSY_CONTAINER" != "$CURRENT_CONTAINER" ]; then echo "Stopping conflict container $BUSY_CONTAINER..."; docker stop $BUSY_CONTAINER && docker rm -f $BUSY_CONTAINER; fi
+
+    # 3. Pull image mới
+    - docker compose pull
+
+    # 4. Deploy nóng (Docker Compose tự recreate trong ~1s, không dùng down trước)
+    - docker compose up -d
+
+    # 5. Kiểm tra Healthcheck vòng lặp (Tương thích POSIX Shell của Runner)
+    - export CONTAINER_ID=$(docker compose ps -q web)
+    - export SUCCESS=0
+    - export i=1
+    - |
+      while [ $i -le 10 ]; do
+        STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CONTAINER_ID 2>/dev/null || echo "starting")
+        echo "Container health status: $STATUS (check $i/10)"
+        if [ "$STATUS" = "healthy" ]; then
+          echo "Deployment successful!"
+          SUCCESS=1
+          break
+        elif [ "$STATUS" = "unhealthy" ]; then
+          echo "Container is unhealthy! Boot failed."
+          break
+        fi
+        i=$((i + 1))
+        sleep 3
+      done
+
+    # 6. Xử lý Rollback nếu deploy thất bại
+    - |
+      if [ $SUCCESS -ne 1 ]; then
+        echo "LỖI: Bản deploy mới không vượt qua Health Check!"
+        notify_rollback
+        if [ ! -z "$PREVIOUS_TAG" ]; then
+          echo "Tiến hành Rollback về phiên bản cũ: $PREVIOUS_TAG..."
+          export IMAGE_TAG=$PREVIOUS_TAG
+          docker compose up -d
+          echo "Khôi phục hoàn tất."
+        else
+          echo "Không tìm thấy phiên bản dự phòng lịch sử. Hệ thống giữ nguyên trạng thái lỗi."
+        fi
+        exit 1
+      else
+        # Cảnh báo deploy thành công tới Discord
+        if [ ! -z "$DISCORD_WEBHOOK_URL" ]; then
+          chmod +x .gitlab/scripts/notify-discord.sh
+          ENV_UPPER=$(echo $CI_ENVIRONMENT_NAME | tr 'a-z' 'A-Z')
+          .gitlab/scripts/notify-discord.sh "✅ [$ENV_UPPER] DEPLOY THÀNH CÔNG" "3066993" "Hệ thống đã được cập nhật phiên bản mới hoạt động ổn định." || true
+        fi
+      fi
+
+    # 7. Dọn dẹp đĩa
+    - docker container prune -f
+    - docker image prune -f
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "beta" && $CI_PIPELINE_SOURCE == "push"'
+
+# Môi trường Production (prod branch) - Port 9080
+# ⚠️ Không khai báo cache: job chỉ chạy 'docker compose', không cần node_modules
+deploy-production:
+  stage: deploy
+  image: docker:latest
+  tags:
+    - docker
+  resource_group: production_deployment
+  environment:
+    name: production
+    url: https://blog.4me4you.io.vn/
+  before_script:
+    - apk add --no-cache bash curl
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://100.93.231.78:5050
+    - |
+      notify_rollback() {
+        echo "Đang gửi cảnh báo lỗi đến Discord..."
+        if [ ! -z "$DISCORD_WEBHOOK_URL" ]; then
+          chmod +x .gitlab/scripts/notify-discord.sh
+          ENV_UPPER=$(echo $CI_ENVIRONMENT_NAME | tr 'a-z' 'A-Z')
+          .gitlab/scripts/notify-discord.sh "🚨 [$ENV_UPPER] DEPLOY THẤT BẠI" "15158332" "Hệ thống đã tự động rollback về phiên bản stable cũ." || true
+        else
+          echo "Không tìm thấy DISCORD_WEBHOOK_URL. Bỏ qua gửi cảnh báo."
+        fi
+      }
+  script:
+    - export HOST_PORT=9080
+    - export COMPOSE_PROJECT_NAME=my-blog-production
+    - export IMAGE_TAG=${NEXT_TAG:-$CI_COMMIT_SHORT_SHA}
+
+    # 1. State Backup: Lấy tag hiện tại của container đang chạy ổn định
+    - export PREVIOUS_IMAGE=$(docker inspect --format='{{index .Config.Image}}' ${COMPOSE_PROJECT_NAME}-web-1 2>/dev/null || echo "")
+    - export PREVIOUS_TAG=${PREVIOUS_IMAGE##*:}
+    - echo "Stable version currently running is [$PREVIOUS_TAG]"
+
+    # 2. Xử lý xung đột cổng (Chỉ dừng container nếu không thuộc dự án compose này)
+    - export BUSY_CONTAINER=$(docker ps -q --filter "publish=$HOST_PORT")
+    - export CURRENT_CONTAINER=$(docker compose ps -q web 2>/dev/null || echo "")
+    - if [ ! -z "$BUSY_CONTAINER" ] && [ "$BUSY_CONTAINER" != "$CURRENT_CONTAINER" ]; then echo "Stopping conflict container $BUSY_CONTAINER..."; docker stop $BUSY_CONTAINER && docker rm -f $BUSY_CONTAINER; fi
+
+    # 3. Pull image mới
+    - docker compose pull
+
+    # 4. Deploy nóng (Docker Compose tự recreate trong ~1s, không dùng down trước)
+    - docker compose up -d
+
+    # 5. Kiểm tra Healthcheck vòng lặp (Tương thích POSIX Shell của Runner)
+    - export CONTAINER_ID=$(docker compose ps -q web)
+    - export SUCCESS=0
+    - export i=1
+    - |
+      while [ $i -le 10 ]; do
+        STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CONTAINER_ID 2>/dev/null || echo "starting")
+        echo "Container health status: $STATUS (check $i/10)"
+        if [ "$STATUS" = "healthy" ]; then
+          echo "Deployment successful!"
+          SUCCESS=1
+          break
+        elif [ "$STATUS" = "unhealthy" ]; then
+          echo "Container is unhealthy! Boot failed."
+          break
+        fi
+        i=$((i + 1))
+        sleep 3
+      done
+
+    # 6. Xử lý Rollback nếu deploy thất bại
+    - |
+      if [ $SUCCESS -ne 1 ]; then
+        echo "LỖI: Bản deploy mới không vượt qua Health Check!"
+        notify_rollback
+        if [ ! -z "$PREVIOUS_TAG" ]; then
+          echo "Tiến hành Rollback về phiên bản cũ: $PREVIOUS_TAG..."
+          export IMAGE_TAG=$PREVIOUS_TAG
+          docker compose up -d
+          echo "Khôi phục hoàn tất."
+        else
+          echo "Không tìm thấy phiên bản dự phòng lịch sử. Hệ thống giữ nguyên trạng thái lỗi."
+        fi
+        exit 1
+      else
+        # Cảnh báo deploy thành công tới Discord
+        if [ ! -z "$DISCORD_WEBHOOK_URL" ]; then
+          chmod +x .gitlab/scripts/notify-discord.sh
+          ENV_UPPER=$(echo $CI_ENVIRONMENT_NAME | tr 'a-z' 'A-Z')
+          .gitlab/scripts/notify-discord.sh "✅ [$ENV_UPPER] DEPLOY THÀNH CÔNG" "3066993" "Hệ thống đã được cập nhật phiên bản mới hoạt động ổn định." || true
+        fi
+      fi
+
+    # 7. Dọn dẹp đĩa
+    - docker container prune -f
+    - docker image prune -f
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "prod" && $CI_PIPELINE_SOURCE == "push"'
+
+# ==========================================
+# Stage 4: Auto Tagging (Chỉ chạy sau khi Deploy thành công)
+# ==========================================
+auto-tagging:
+  stage: release
+  image:
+    name: alpine/git:latest
+    entrypoint: [""]
+  tags:
+    - docker
+  cache: []
+  script:
+    - |
+      git config --global user.email "gitlab-ci@example.com"
+      git config --global user.name "GitLab CI"
+      git config --global http.sslVerify false
+      export PROTOCOL=$(echo "$CI_SERVER_URL" | cut -d: -f1)
+      export HOST_AND_PORT=$(echo "$CI_SERVER_URL" | cut -d/ -f3)
+      git remote set-url origin "${PROTOCOL}://oauth2:${GL_TOKEN}@${HOST_AND_PORT}/${CI_PROJECT_PATH}.git"
+      git fetch --tags
+      if [ -z "$NEXT_TAG" ]; then
+        echo "LỖI: Không tìm thấy NEXT_TAG trong biến môi trường!"
+        exit 1
+      fi
+      echo "Tự động tạo tag $NEXT_TAG cho commit $CI_COMMIT_SHORT_SHA"
+      git tag -a "$NEXT_TAG" -m "Auto-tagged after successful deploy [skip ci]"
+      git push origin "$NEXT_TAG"
+
+  rules:
+    - if: '$GL_TOKEN && ($CI_COMMIT_BRANCH == "beta" || $CI_COMMIT_BRANCH == "prod") && $CI_PIPELINE_SOURCE == "push"'
+
+

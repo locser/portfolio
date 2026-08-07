@@ -1,9 +1,68 @@
+# ============================================================
+# .dockerignore — loại trừ files KHÔNG CẦN thiết khi build Docker
+# ============================================================
+
+# ❌ KHÔNG copy node_modules (sẽ được cài trong Dockerfile)
 node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ❌ KHÔNG copy build output của Next.js (sẽ được tạo trong Dockerfile)
 .next
+out
+build
+dist
+
+# ❌ KHÔNG copy git (không cần cho Docker image)
 .git
+.gitignore
+.gitattributes
+
+# ❌ KHÔNG copy CI/CD config (chỉ cần cho runner, không cần trong image)
+.gitlab-ci.yml
 .github
-coverage
-Dockerfile
-docker-compose.yml
+.azure-pipelines.yml
+
+# ❌ KHÔNG copy docs, tests (không chạy trong production image)
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+docs/
+tests/
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+coverage/
+
+# ❌ KHÔNG copy IDE/OS files
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ❌ KHÔNG copy env files (chứa secrets!)
 .env
-.env*.local
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# ❌ KHÔNG copy Docker files (tránh recursive)
+Dockerfile
+Dockerfile.*
+.dockerignore
+docker-compose*.yml
+
+# ❌ KHÔNG copy scripts không dùng trong runtime
+scripts/
+.gitlab/
+
+# ✅ CHỈ GIỮ LẠI: src/, public/, package.json, package-lock.json, next.config.js, tsconfig.json

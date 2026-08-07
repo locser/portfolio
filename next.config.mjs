@@ -14,6 +14,7 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
+    instrumentationHook: true,
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { verifySessionToken } from "@/src/lib/auth";
 import { getChannels, getTopics, saveTopics, Topic } from "@/src/lib/forum";
+import { withMetrics } from "@/src/lib/metrics";
+
+
 
 // Helper to verify admin authority
 function checkAdminAuth(request: NextRequest): boolean {
@@ -12,7 +15,7 @@ function checkAdminAuth(request: NextRequest): boolean {
 }
 
 // 1. GET: Retrieve topics for a specific channel
-export async function GET(request: NextRequest) {
+async function getHandler(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const channelId = url.searchParams.get("channelId");
@@ -44,8 +47,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export const GET = withMetrics(getHandler, '/api/forum/topics', 'GET');
+
 // 2. POST: Create a new topic in a channel
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   try {
     const body = await request.json();
     const { channelId, title, authorName, content } = body;
@@ -99,3 +104,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Lỗi hệ thống khi đăng chủ đề mới" }, { status: 500 });
   }
 }
+
+export const POST = withMetrics(postHandler, '/api/forum/topics', 'POST');
